@@ -327,6 +327,36 @@ describe('Medicine & Treasure Encounters', () => {
   });
 });
 
+describe('Attribute-Driven Stats', () => {
+  test('drafted attribute should be stronger than baseline', () => {
+    const snake = new SnakeAgent({ attribute: 'intelligence', equipment: [], personality: [] });
+    assert.equal(snake.getAttributeValue('intelligence'), 7);
+    assert.equal(snake.getAttributeValue('strength'), 4);
+    assert.equal(snake.getAttributeValue('dexterity'), 4);
+    assert.equal(snake.getAttributeValue(), 7); // No arg → drafted attribute
+  });
+
+  test('intelligence snake can disarm traps, strength snake cannot', () => {
+    const intSnake = new SnakeAgent({ attribute: 'intelligence', equipment: [], personality: [] });
+    const strSnake = new SnakeAgent({ attribute: 'strength', equipment: [], personality: [] });
+
+    const intOptions = EncounterResolver.getAvailableOptions(ENCOUNTERS.TRAP, intSnake);
+    const strOptions = EncounterResolver.getAvailableOptions(ENCOUNTERS.TRAP, strSnake);
+
+    assert.ok(intOptions.some(o => o.id === 'disarm'), 'intelligence snake should see disarm');
+    assert.ok(!strOptions.some(o => o.id === 'disarm'), 'strength snake should not see disarm');
+  });
+
+  test('outcome flavor text resolves arrays to a single string', () => {
+    const snake = new SnakeAgent({ attribute: 'strength', equipment: [], personality: [] });
+    for (let i = 0; i < 10; i++) {
+      const outcome = EncounterResolver.resolveOutcome(ENCOUNTERS.FOOD, snake, 'eat');
+      assert.equal(typeof outcome.text, 'string');
+      assert.ok(outcome.text.length > 0);
+    }
+  });
+});
+
 function test(name, fn) {
   try {
     fn();

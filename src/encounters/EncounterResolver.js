@@ -9,6 +9,17 @@ import {
   ENCOUNTERS,
 } from './EncounterTypes.js';
 
+/**
+ * Pick one flavor text variant — outcomes may define text as a
+ * string or an array of variations for narrative variety
+ */
+function pickFlavor(text) {
+  if (Array.isArray(text)) {
+    return text[Math.floor(Math.random() * text.length)];
+  }
+  return text;
+}
+
 export class EncounterResolver {
   /**
    * Get available options for an encounter
@@ -120,7 +131,7 @@ export class EncounterResolver {
         success: true,
         health: outcome.health,
         score: outcome.score,
-        text: outcome.text,
+        text: pickFlavor(outcome.text),
       };
     }
 
@@ -134,14 +145,14 @@ export class EncounterResolver {
           success: true,
           health: outcome.success.health,
           score: outcome.success.score,
-          text: outcome.success.text,
+          text: pickFlavor(outcome.success.text),
         };
       } else {
         return {
           success: false,
           health: outcome.failure.health,
           score: outcome.failure.score,
-          text: outcome.failure.text,
+          text: pickFlavor(outcome.failure.text),
         };
       }
     }

@@ -2,7 +2,7 @@
 
 A **personality-driven autobattler** where you draft a snake's attributes and equipment, then watch it navigate a procedurally-generated world, make autonomous decisions, and survive encounters.
 
-## 🎮 [Play Now](https://snakeab.vercel.app)
+## 🎮 [Play Now](https://snake-ab.vercel.app)
 
 No installation required — open and play!
 
@@ -154,7 +154,7 @@ npm test
 
 ## 🔗 Links
 
-- **Play online**: https://snakeab.vercel.app
+- **Play online**: https://snake-ab.vercel.app
 - **GitHub**: https://github.com/t3dy/SnakeAB
 - **Design spec**: See DESIGN.md in this repo
 

@@ -252,6 +252,7 @@ export class Simulator {
       gameOver: this.gameOver,
       victory: this.victory,
       encounter: this.currentEncounter,
+      path: this.currentPath.slice(this.pathIndex), // Remaining planned route
       log: this.log.slice(-10), // Last 10 log entries
     };
   }

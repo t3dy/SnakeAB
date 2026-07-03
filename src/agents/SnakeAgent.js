@@ -67,16 +67,14 @@ export class SnakeAgent {
   }
 
   /**
-   * Get attribute value (1-10 scale)
+   * Get attribute value (1-10 scale).
+   * The drafted attribute is strong (7); the others are baseline (4).
+   * Pass a stat name to query a specific attribute, or omit it
+   * to get the drafted attribute's value.
    */
-  getAttributeValue() {
-    // Phase 2: Implement proper stat progression
-    const base = {
-      strength: 5,
-      dexterity: 5,
-      intelligence: 5,
-    };
-    return base[this.attribute] || 5;
+  getAttributeValue(statName = null) {
+    const stat = statName || this.attribute;
+    return stat === this.attribute ? 7 : 4;
   }
 
   /**

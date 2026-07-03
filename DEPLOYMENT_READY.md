@@ -70,7 +70,7 @@ vercel
 
 ### 4. Share the Link
 Your game will be live at:
-- `https://snakeab.vercel.app` (or custom URL)
+- `https://snake-ab.vercel.app` (or custom URL)
 
 ---
 
@@ -138,11 +138,11 @@ git push  # Vercel auto-deploys
 ### Monitor
 - **Vercel Dashboard**: https://vercel.com/dashboard
 - **GitHub Repo**: https://github.com/t3dy/SnakeAB
-- **Live Game**: https://snakeab.vercel.app
+- **Live Game**: https://snake-ab.vercel.app
 
 ### Share
 Send friends/colleagues:
-- **Play Link**: https://snakeab.vercel.app
+- **Play Link**: https://snake-ab.vercel.app
 - **GitHub Link**: https://github.com/t3dy/SnakeAB
 - **Local Development**: `git clone https://github.com/t3dy/SnakeAB.git && cd SnakeAB && npm install && npm run dev`
 
@@ -151,7 +151,7 @@ Send friends/colleagues:
 ## Verify Deployment
 
 After Vercel finishes:
-1. Open **https://snakeab.vercel.app**
+1. Open **https://snake-ab.vercel.app**
 2. Draft a snake (select attributes, equipment, personality, difficulty)
 3. Click "Start Simulation"
 4. Watch the game play

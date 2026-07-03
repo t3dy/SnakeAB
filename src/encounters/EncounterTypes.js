@@ -51,17 +51,27 @@ export const FOOD_ENCOUNTER = {
     eat: {
       health: 5,
       score: 10,
-      text: '🍎 Nom nom! Health restored.',
+      text: [
+        '🍎 Nom nom! Health restored.',
+        '🍎 A feast fit for a serpent. +5 health.',
+        '🍎 You swallow it whole, the way of your kind. Delicious.',
+      ],
     },
     save: {
       health: 2,
       score: 15,
-      text: '📦 Stored the food safely. Will need it later.',
+      text: [
+        '📦 Stored the food safely. Will need it later.',
+        '📦 A wise snake plans ahead. Cached for leaner days.',
+      ],
     },
     skip: {
       health: 0,
       score: 0,
-      text: '⏭️ Continued on your journey.',
+      text: [
+        '⏭️ Continued on your journey.',
+        '⏭️ Not hungry. The road calls.',
+      ],
     },
   },
 };
@@ -209,58 +219,80 @@ export const PREDATOR_ENCOUNTER = {
   outcomes: {
     attack: {
       check: (snake, predator) => {
-        // Strength check vs predator threat
-        const snakeStrength = 5; // Phase 2: use snake.getAttributeValue()
+        // Strength check vs predator threat — drafting Strength matters
+        const snakeStrength = getStatValue(snake, 'strength');
         const bonus = snake.getEquipmentBonus('combat');
         const roll = Math.random() * 10;
-        return snakeStrength + bonus + roll > predator.baseThreat;
+        return snakeStrength + bonus + roll > predator.baseThreat + 5;
       },
       success: {
         health: 0,
         score: 50,
-        text: '⚔️ Victory! Defeated the predator!',
+        text: [
+          '⚔️ Victory! Defeated the predator!',
+          '⚔️ A crushing strike — the predator flees, beaten!',
+          '⚔️ Fangs flash. The predator falls. You are the hunter now.',
+        ],
       },
       failure: {
         health: -3,
         score: 0,
-        text: '🐺 Predator won the fight! Lost 3 health.',
+        text: [
+          '🐺 Predator won the fight! Lost 3 health.',
+          '🐺 Claws rake your scales. You barely escape. -3 health.',
+          '🐺 Outmatched! You retreat bleeding. -3 health.',
+        ],
       },
     },
     flee: {
       check: (snake, predator) => {
-        // Dexterity check
-        const dex = 5;
+        // Dexterity check — drafting Dexterity matters
+        const dex = getStatValue(snake, 'dexterity');
         const roll = Math.random() * 10;
-        return dex + roll > predator.baseThreat;
+        return dex + roll > predator.baseThreat + 4;
       },
       success: {
         health: 0,
         score: 5,
-        text: '💨 Escaped safely!',
+        text: [
+          '💨 Escaped safely!',
+          '💨 A blur of scales — you vanish into the grass.',
+          '💨 Too slow, predator. You slip away untouched.',
+        ],
       },
       failure: {
         health: -2,
         score: 0,
-        text: '🐺 Caught while fleeing! Lost 2 health.',
+        text: [
+          '🐺 Caught while fleeing! Lost 2 health.',
+          '🐺 Teeth graze your tail as you bolt. -2 health.',
+        ],
       },
     },
     hide: {
       check: (snake, predator) => {
-        // Stealth check (camouflage or intelligence)
+        // Stealth check (camouflage + intelligence)
         const bonus = snake.getEquipmentBonus('evasion');
-        const intel = 5;
+        const intel = getStatValue(snake, 'intelligence');
         const roll = Math.random() * 10;
-        return intel + bonus + roll > predator.baseThreat;
+        return intel + bonus + roll > predator.baseThreat + 4;
       },
       success: {
         health: 0,
         score: 10,
-        text: '🫥 Stayed hidden. Predator passed by.',
+        text: [
+          '🫥 Stayed hidden. Predator passed by.',
+          '🫥 Motionless among the leaves. The danger moves on.',
+          '🫥 Your camouflage holds. The predator sniffs the air... and leaves.',
+        ],
       },
       failure: {
         health: -2,
         score: 0,
-        text: '🐺 Found while hiding! Lost 2 health.',
+        text: [
+          '🐺 Found while hiding! Lost 2 health.',
+          '🐺 A twig snaps. Spotted! -2 health.',
+        ],
       },
     },
     'stand-ground': {
@@ -506,13 +538,11 @@ export function isOptionAvailable(option, snake) {
 }
 
 /**
- * Get stat value from snake
+ * Get stat value from snake (drafted attribute is stronger)
  */
 function getStatValue(snake, statName) {
-  const baseValues = {
-    strength: 5,
-    dexterity: 5,
-    intelligence: 5,
-  };
-  return baseValues[statName] || 5;
+  if (snake && typeof snake.getAttributeValue === 'function') {
+    return snake.getAttributeValue(statName);
+  }
+  return 5;
 }

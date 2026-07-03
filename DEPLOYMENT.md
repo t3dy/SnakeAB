@@ -42,7 +42,7 @@ None required for this project (no API keys needed).
 
 ## Deployment Status
 After deployment, your game will be live at:
-- https://snakeab.vercel.app (or custom domain)
+- https://snake-ab.vercel.app (or custom domain)
 
 ## Updating After Deployment
 ```bash

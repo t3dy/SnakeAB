@@ -168,20 +168,38 @@ function displayEncounter(encounter) {
   // Get encounter definition
   const encounterDef = getEncounterDef(entity.type);
 
-  if (encounterDef && availableOptions.length > 0) {
-    // Display to player
-    appState.encounterUI.display(
-      encounterDef,
-      availableOptions,
-      suggestedOption,
-      handleEncounterChoice
-    );
-  } else {
+  const autopilot = document.getElementById('autopilot-toggle')?.checked;
+
+  if (!encounterDef || availableOptions.length === 0) {
     // No definition for this entity — auto-resolve via AI so
     // the game never softlocks on an unknown encounter
     appState.simulator.resolveEncounter();
     appState.encounterPending = false;
+    return;
   }
+
+  if (autopilot) {
+    // Autobattler mode: the snake's personality decides, the
+    // story unfolds in the log — no popup, no interruption
+    appState.simulator.resolveEncounterWithChoice(suggestedOption);
+    const state = appState.simulator.getState();
+    appState.renderer.render(state);
+    updateUI(state);
+    appState.encounterPending = false;
+
+    if (state.gameOver) {
+      endGame(state);
+    }
+    return;
+  }
+
+  // Manual mode: show the popup, player decides
+  appState.encounterUI.display(
+    encounterDef,
+    availableOptions,
+    suggestedOption,
+    handleEncounterChoice
+  );
 }
 
 /**

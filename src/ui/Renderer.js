@@ -34,6 +34,11 @@ export class Renderer {
     // Draw grid under entities
     this.drawGrid(world.width, world.height);
 
+    // Draw the snake's planned route as faint dots
+    if (state.path && state.path.length > 0) {
+      this.drawPath(state.path);
+    }
+
     // Draw entities
     for (const tile of world.tiles) {
       for (const entity of tile.entities) {
@@ -44,6 +49,26 @@ export class Renderer {
 
     // Draw snake on top of everything
     this.drawSnake(snake);
+  }
+
+  /**
+   * Draw the planned path as fading dots
+   */
+  drawPath(path) {
+    for (let i = 0; i < path.length; i++) {
+      const pos = path[i];
+      const alpha = Math.max(0.08, 0.4 - i * 0.015); // Fade with distance
+      this.ctx.fillStyle = `rgba(61, 220, 132, ${alpha})`;
+      this.ctx.beginPath();
+      this.ctx.arc(
+        this.offsetX + pos.x * this.cellSize + this.cellSize / 2,
+        this.offsetY + pos.y * this.cellSize + this.cellSize / 2,
+        Math.max(1.5, this.cellSize * 0.1),
+        0,
+        Math.PI * 2
+      );
+      this.ctx.fill();
+    }
   }
 
   /**

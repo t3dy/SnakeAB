@@ -81,7 +81,7 @@ Vercel will deploy and give you a URL.
 ## Default Vercel URL
 
 Your game will be at:
-- `https://snakeab.vercel.app`
+- `https://snake-ab.vercel.app`
 
 (or a similar Vercel-generated URL)
 
@@ -121,7 +121,7 @@ git push
 
 Your game is now:
 - ✅ On GitHub at `https://github.com/t3dy/SnakeAB`
-- ✅ Deployed to `https://snakeab.vercel.app`
+- ✅ Deployed to `https://snake-ab.vercel.app`
 - ✅ Auto-deploying on every push
 
 Share the Vercel URL with anyone who wants to play!
