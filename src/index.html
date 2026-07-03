@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnakeAB — Autobattler</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      overflow: hidden;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      background: #1a1a1a;
+      padding: 1rem;
+      border-bottom: 1px solid #333;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      color: #4a9eff;
+      margin-bottom: 0.25rem;
+    }
+    header p {
+      font-size: 0.85rem;
+      color: #888;
+    }
+    main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    #world-container {
+      flex: 0 0 50%;
+      background: #0a0a0a;
+      border-right: 1px solid #333;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    canvas {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      image-rendering: pixelated;
+    }
+    #stats {
+      background: #1a1a1a;
+      padding: 1rem;
+      border: 1px solid #333;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .stat-label {
+      color: #888;
+      min-width: 80px;
+    }
+    .stat-value {
+      color: #4a9eff;
+      font-weight: bold;
+    }
+    #ui-container {
+      flex: 1;
+      background: #1a1a1a;
+      padding: 1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .panel {
+      background: #0a0a0a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 1rem;
+    }
+    .panel h2 {
+      color: #4a9eff;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid #333;
+      padding-bottom: 0.5rem;
+    }
+    .buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    button {
+      background: #4a9eff;
+      color: #000;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #3a8edf;
+    }
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    .log {
+      background: #000;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 0.75rem;
+      font-size: 0.75rem;
+      color: #4a9eff;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+    }
+    .log-entry {
+      margin-bottom: 0.25rem;
+      word-break: break-word;
+    }
+    input, select {
+      background: #1a1a1a;
+      color: #e0e0e0;
+      border: 1px solid #333;
+      padding: 0.5rem;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #4a9eff;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>🐍 SnakeAB</h1>
+      <p>Draft. Simulate. Watch. Survive.</p>
+    </header>
+    <main>
+      <div id="world-container" style="display: none;">
+        <canvas id="game-canvas" width="400" height="400"></canvas>
+        <div id="stats" class="panel">
+          <h2>Stats</h2>
+          <div class="stat-row">
+            <span class="stat-label">Turn:</span>
+            <span class="stat-value" id="turn-count">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Health:</span>
+            <span class="stat-value" id="health-count">10 / 10</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Score:</span>
+            <span class="stat-value" id="score-count">0</span>
+          </div>
+        </div>
+      </div>
+      <div id="ui-container" style="display: none;">
+        <div class="panel">
+          <h2>Game Controls</h2>
+          <div class="buttons">
+            <button id="pause-btn" disabled>Pause</button>
+            <button id="step-btn" disabled>Step</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Speed</h2>
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <input type="range" id="speed-slider" min="0.1" max="2" step="0.1" value="1" style="flex: 1;" />
+            <span id="speed-label">1.0x</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Log</h2>
+          <div id="debug-log" class="log"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
