@@ -118,7 +118,10 @@ export const MEDICINE_ENCOUNTER = {
     ignore: {
       health: 0,
       score: 0,
-      text: '⏭️ Left the medicine untouched.',
+      text: [
+        '⏭️ The warmth calls, but the trail calls louder. You move on.',
+        '⏭️ No time to bask. A restless snake is a hungry snake, but a resting snake is sometimes a dead one.',
+      ],
     },
   },
 };
@@ -168,7 +171,10 @@ export const TREASURE_ENCOUNTER = {
     leave: {
       health: 0,
       score: 0,
-      text: '⏭️ Moved on without the treasure.',
+      text: [
+        '⏭️ No snake needs treasure. You leave the shine to the dead and the magpies.',
+        '⏭️ The glitter watches you go. Wiser serpents than you have said no to less.',
+      ],
     },
   },
 };
@@ -310,12 +316,19 @@ export const PREDATOR_ENCOUNTER = {
       success: {
         health: -1,
         score: 5,
-        text: '🛡️ Held your ground. Lost only 1 health.',
+        text: [
+          '🛡️ Held your ground. Lost only 1 health.',
+          '🛡️ You coil, flatten, and hiss like a kettle from hell. It costs you a scratch — and buys your life.',
+          '🛡️ The strike glances off. You do not yield the trail. -1 health, +1 legend.',
+        ],
       },
       failure: {
         health: -3,
         score: 0,
-        text: '🐺 Took damage. Lost 3 health.',
+        text: [
+          '🐺 Took damage. Lost 3 health.',
+          '🐺 Bravery without armor is just a slower retreat. -3 health.',
+        ],
       },
     },
   },
@@ -361,12 +374,19 @@ export const TRAP_ENCOUNTER = {
       success: {
         health: 0,
         score: 20,
-        text: '🔧 Successfully disarmed the trap!',
+        text: [
+          '🔧 Successfully disarmed the trap!',
+          '🔧 Slow work, patient work — a nudge here, a careful coil there — and the danger is dead metal and slack line.',
+          '🔧 A clever body finds the weak point. The trap sags, spent, and you glide over it like a rumor.',
+        ],
       },
       failure: {
         health: -2,
         score: 0,
-        text: '💥 Failed to disarm! Lost 2 health.',
+        text: [
+          '💥 Failed to disarm! Lost 2 health.',
+          '💥 Almost. Almost. The mechanism snaps and clips you on the way through. -2 health.',
+        ],
       },
     },
     escape: {
@@ -374,12 +394,18 @@ export const TRAP_ENCOUNTER = {
       success: {
         health: 0,
         score: 10,
-        text: '💨 Escaped past the trap!',
+        text: [
+          '💨 Escaped past the trap!',
+          '💨 Quick through the gap — the danger closes on the space where your tail used to be.',
+        ],
       },
       failure: {
         health: -3,
         score: 0,
-        text: '💥 Triggered it while escaping! Lost 3 health.',
+        text: [
+          '💥 Triggered it while escaping! Lost 3 health.',
+          '💥 Speed was the wrong answer. The trap takes its toll as you tear loose. -3 health.',
+        ],
       },
     },
     'take-damage': {
@@ -388,7 +414,10 @@ export const TRAP_ENCOUNTER = {
       failure: {
         health: -4,
         score: 0,
-        text: '💥 Got caught in the trap! Lost 4 health.',
+        text: [
+          '💥 Got caught in the trap! Lost 4 health.',
+          '💥 Straight through, and it costs what going straight through always costs. -4 health, and a lesson.',
+        ],
       },
     },
   },
@@ -426,17 +455,26 @@ export const NPC_ENCOUNTER = {
     talk: {
       health: 0,
       score: 5,
-      text: '🗣️ Had a chat. Gained some wisdom.',
+      text: [
+        '🗣️ A slow exchange of tongue-flicks and trail-news. Wisdom, freely given.',
+        '🗣️ You share the language of scales for a while. The trail feels less lonely after.',
+      ],
     },
     ignore: {
       health: 0,
       score: 0,
-      text: '👤 Avoided contact.',
+      text: [
+        '👤 You pass without a flick. Not every snake on the trail is your business.',
+        '👤 The other serpent watches you go. Some journeys are made alone.',
+      ],
     },
     trade: {
       health: 0,
       score: 15,
-      text: '💱 Made a favorable trade!',
+      text: [
+        '💱 News for news, a fair trade between serpents. You leave richer.',
+        '💱 A favorable exchange — the other snake wanted what you knew more than you did.',
+      ],
     },
   },
 };
@@ -473,17 +511,27 @@ export const HAZARD_ENCOUNTER = {
     'push-through': {
       health: -2,
       score: 5,
-      text: '🔥 Pushed through! Lost 2 health.',
+      text: [
+        '🔥 Pushed through! Lost 2 health.',
+        '🔥 Straight through the worst of it, scales smoking. It hurts. It works. -2 health.',
+        '🔥 You pay the ground its toll in pain and keep moving. -2 health.',
+      ],
     },
     detour: {
       health: 0,
       score: 0,
-      text: '🛤️ Took a longer route. No danger.',
+      text: [
+        '🛤️ The long way around costs time and nothing else. An old snake\'s choice.',
+        '🛤️ You circle wide. The danger seethes behind you, uncollected.',
+      ],
     },
     wait: {
       health: 0,
       score: 0,
-      text: '⏳ Waited. The hazard passed.',
+      text: [
+        '⏳ Stillness is a snake\'s oldest trick. The danger passes; you remain.',
+        '⏳ You coil and wait it out. Patience costs nothing but time.',
+      ],
     },
   },
 };

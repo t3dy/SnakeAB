@@ -334,12 +334,21 @@ function showGameOverScreen(state, newlyUnlocked) {
        </div>`
     : '';
 
+  // The narrated ending — epitaph or victory coda
+  const epitaphHtml = result.epitaph
+    ? `<div style="margin-bottom:1.25rem;padding:0.9rem;background:#151b10;border-left:3px solid ${state.victory ? '#3ddc84' : '#aa5544'};border-radius:4px;color:#d8c9a3;font-style:italic;line-height:1.6;">
+         ${escapeHtml(result.epitaph)}
+       </div>`
+    : '';
+
   display.innerHTML = `
     <h2 style="color:${state.victory ? '#3ddc84' : '#ff6666'};font-size:1.4rem;margin-bottom:1rem;text-align:center;">
       ${state.victory ? '🏁 Victory!' : '☠️ Your snake has fallen.'}
     </h2>
+    ${epitaphHtml}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1.5rem;font-size:0.95rem;margin-bottom:0.5rem;">
       <span style="color:#888;">Score</span><strong style="color:#4a9eff;text-align:right;">${result.score}${isNewBest ? ' ⭐ New Best!' : ''}</strong>
+      <span style="color:#888;">Final length</span><strong style="text-align:right;">${result.finalLength} scales</strong>
       <span style="color:#888;">Turns survived</span><strong style="text-align:right;">${result.turns}</strong>
       <span style="color:#888;">Resources gathered</span><strong style="text-align:right;">${result.resourcesGathered}</strong>
       <span style="color:#888;">Difficulty</span><strong style="text-align:right;">${difficulty}</strong>

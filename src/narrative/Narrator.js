@@ -167,6 +167,64 @@ const PREDICAMENTS = {
 };
 
 /* ------------------------------------------------------------------ */
+/* Kind-specific resolutions — the same choice lands differently       */
+/* depending on who or what was in the grass                           */
+/* ------------------------------------------------------------------ */
+
+const RESOLUTION_FLAVOR = {
+  'mouse:eat': [
+    '🐭 The mouse never finished its seed. One strike, a slow swallow, and the field is quieter by one heartbeat.',
+    '🐭 Warm, quick, and gone. The mouse goes down the way mice always have.',
+  ],
+  'frog:eat': [
+    '🐸 The frog leapt — a half-beat too late. It goes down still kicking, cool and slick.',
+    '🐸 Mud, then muscle, then stillness. The marsh frog is yours.',
+  ],
+  'eggs:eat': [
+    '🥚 One by one the eggs go down whole, warm with the ghost of the mother\'s breast. Somewhere above, a bird screams at an empty nest.',
+    '🥚 You crush the shells against your spine as they slide down. Rich yolk. Easy living. The parent will grieve loudly and briefly, as birds do.',
+  ],
+  'cricket:eat': [
+    '🦗 A snap, a crunch, a mouthful of song. Barely worth the pause — but the road is long.',
+    '🦗 The chorus scatters. You catch one mid-leap. The rest sing on as if nothing happened; for them, nothing did.',
+  ],
+  'rat-snake:talk': [
+    '🐍 The old rat snake shares what he knows: which burrows are empty, which shadows have wings. Solid, unhurried wisdom from a life spent not dying.',
+    '🐍 "Stay off the open ground at dusk," the rat snake advises. "The hawk hunts late this season." Good counsel, freely given.',
+  ],
+  'garter:talk': [
+    '🐍 The garter snake talks fast and mostly nonsense — but buried in the babble: a fox has been digging along the north trail. Worth knowing.',
+    '🐍 Gossip pours out of the little garter like water: who got eaten, who shed badly, where the frogs are fat. You slither on, better informed.',
+  ],
+  'elder:talk': [
+    '🐍 The elder speaks slowly, as if each word costs a scale. "The goal you seek is real. I saw it once, when my eyes still saw." You believe it.',
+    '🐍 "Length is not wisdom," the pale one murmurs, "but it is reach." You leave the hollow feeling older and slightly wiser.',
+  ],
+  'rat-snake:trade': [
+    '🐍 You trade the rat snake your news for his: a fair exchange between honest serpents. He points you toward easier ground.',
+  ],
+  'garter:trade': [
+    '🐍 The garter trades you a shortcut for a story. The little ones always want stories.',
+  ],
+  'elder:trade': [
+    '🐍 The elder takes nothing and gives you a blessing older than the field. Whatever it is worth, it weighs nothing to carry.',
+  ],
+  'basking-rock:use': [
+    '☀️ You pour yourself across the warm stone and let the heat reach down to the spine. Old aches loosen. The body remembers how to be whole.',
+    '☀️ An hour of stored sunlight, belly-down on good granite. This is the oldest medicine there is.',
+  ],
+  'basking-rock:ration': [
+    '☀️ A short bask — enough to take the edge off the cold and the pain, not enough to grow careless. The sun will rise again tomorrow.',
+  ],
+  'hoard:take-all': [
+    '✨ You thread yourself through the glitter and claim all of it, dragging what you can. Senseless. Magnificent. The magpie would have understood.',
+  ],
+  'hoard:choose': [
+    '✨ You coil past the foil and glass and take only the true shine — the ring, smooth and cold and old. A discerning serpent. A dragon in miniature.',
+  ],
+};
+
+/* ------------------------------------------------------------------ */
 /* Option phrases — how each choice reads in prose                     */
 /* ------------------------------------------------------------------ */
 
@@ -267,10 +325,20 @@ export function composeDeliberation(chosenOption, rejectedOptions, snake) {
 
 /**
  * How it worked out — builds on the outcome's flavor line and adds
- * consequences: growth from eating, the cost of length in a chase
+ * consequences: growth from eating, the cost of length in a chase.
+ * Kind-specific writing takes over when it exists (a frog goes down
+ * differently than a clutch of eggs).
  */
-export function composeResolution(outcome, entityType, chosenOption, snake) {
+export function composeResolution(outcome, entityType, chosenOption, snake, kind = null) {
   let text = outcome.text || '';
+
+  // Kind-specific resolution writing replaces the generic line
+  if (kind && outcome.success !== false) {
+    const pool = RESOLUTION_FLAVOR[`${kind}:${chosenOption}`];
+    if (pool) {
+      text = pick(pool);
+    }
+  }
 
   const parts = [];
   if (outcome.health > 0) parts.push(`+${outcome.health} health`);
@@ -309,6 +377,80 @@ export function composeNarration({ entityType, kind, chosenOption, rejectedOptio
   return {
     predicament: predicament || composePredicament(entityType, kind, snake),
     deliberation: composeDeliberation(chosenOption, rejectedOptions, snake),
-    resolution: composeResolution(outcome, entityType, chosenOption, snake),
+    resolution: composeResolution(outcome, entityType, chosenOption, snake, kind),
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Endings — every death named, every victory sung                     */
+/* ------------------------------------------------------------------ */
+
+const EPITAPHS = {
+  hawk: [
+    'The hawk rose with a heavier shadow than it came with. The field will not remember, but the crickets sang louder that evening.',
+    'Taken skyward, as so many of your kind before you. Somewhere between the grass and the clouds, the story ends.',
+  ],
+  fox: [
+    'The fox dug well and dined better. Every trail ends somewhere; yours ends at a burrow mouth, in patient black eyes.',
+  ],
+  heron: [
+    'The heron barely moved. That was always the trick of it. The shallows are glass-still again, and fuller by one snake.',
+  ],
+  badger: [
+    'The badger did not fear the venom, and in the end it did not need to. They eat rattlesnakes for sport, and you were no rattlesnake.',
+  ],
+  snare: [
+    'The wire closed and held. The one who set it will find more than a rabbit — and understand nothing of the journey it ended.',
+  ],
+  sap: [
+    'The sap held you the way it held the beetles and the seasons: completely, and without malice. Amber keeps what it takes.',
+  ],
+  rockfall: [
+    'The stones came down as stones do — all at once, after ages of waiting. The slope is still now. It can afford to be.',
+  ],
+  fire: [
+    'The fire was the one hunter you could not read, dodge, or charm. It took the field, and it took you with it.',
+  ],
+  marsh: [
+    'The marsh was patient, as promised. It has eaten faster things than you, and now it has eaten you too.',
+  ],
+  scree: [
+    'The scorched stones took their toll a scale at a time until there were no scales left to give.',
+  ],
+  'burning-ground': [
+    'The burning ground asked a price for every length crossed, and in the end the price was everything.',
+    'You crossed one hazard too many. The ground does not haggle, and today it collected in full.',
+  ],
+  default: [
+    'The grass closes over the trail. Every snake\'s story ends mid-journey; yours ended here.',
+  ],
+};
+
+const VICTORY_CODAS = [
+  'The goal at last — warm stone, safe hollow, the end of the long trail. You coil once around your own length and rest. You have earned the sun.',
+  'You arrive as every survivor arrives: scarred, longer, and quietly certain the journey was worth the skin it cost.',
+  'The trail ends where the old serpent said it would. Behind you: the hawk\'s shadow, the fox\'s patience, the patient marsh. Ahead: rest. You made it.',
+];
+
+/**
+ * Narrate the snake's death, named for what killed it
+ */
+export function composeEpitaph(threat, snake, turns) {
+  const kind = threat && threat.kind;
+  const pool = EPITAPHS[kind] || EPITAPHS.default;
+  let text = pick(pool);
+
+  const length = snake ? snake.length : 3;
+  text += ` It had grown ${length} scales long and survived ${turns} turns.`;
+  return text;
+}
+
+/**
+ * Narrate the snake's victory
+ */
+export function composeVictoryCoda(snake, turns) {
+  let text = pick(VICTORY_CODAS);
+  const length = snake ? snake.length : 3;
+  text += ` ${length} scales long, ${turns} turns on the trail.`;
+  return text;
 }

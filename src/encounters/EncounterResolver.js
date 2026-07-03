@@ -140,10 +140,11 @@ export class EncounterResolver {
       };
     }
 
-    // For outcomes with checks (combat, stealth, etc.)
-    if (outcome.check && outcome.success && outcome.failure) {
+    // For outcomes with checks (combat, stealth, etc.) — success may
+    // be null for choices with no good ending (e.g. triggering a trap)
+    if (outcome.check && outcome.failure) {
       const entity = { baseThreat: 5 }; // Phase 3: pass actual entity
-      const checkResult = outcome.check(snake, entity);
+      const checkResult = outcome.success ? outcome.check(snake, entity) : false;
 
       if (checkResult) {
         return {

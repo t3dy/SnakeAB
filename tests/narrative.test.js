@@ -11,6 +11,8 @@ import {
   composeDeliberation,
   composeResolution,
   composeNarration,
+  composeEpitaph,
+  composeVictoryCoda,
 } from '../src/narrative/Narrator.js';
 import { getEncounterDef, ENCOUNTERS } from '../src/encounters/EncounterTypes.js';
 import { Simulator } from '../src/sim/Simulator.js';
@@ -175,6 +177,64 @@ describe('Narration Coverage — every contingency has writing', () => {
     for (let i = 0; i < 4; i++) snake.grow();
     const text = composePredicament('predator', 'hawk', snake);
     assert.ok(text.includes('longer now'), 'long snake should sense its vulnerability');
+  });
+
+  test('kind-specific resolution overrides generic text on success', () => {
+    const snake = new SnakeAgent({});
+    const outcome = { success: true, health: 5, score: 10, text: 'generic line' };
+    const text = composeResolution(outcome, 'food', 'eat', snake, 'frog');
+    assert.ok(!text.startsWith('generic line'), 'frog meal should get frog writing');
+    assert.ok(text.includes('🐸'), 'frog resolution should be about the frog');
+  });
+
+  test('kind resolution falls back to generic when no pool exists', () => {
+    const snake = new SnakeAgent({});
+    const outcome = { success: true, health: 0, score: 0, text: 'generic line' };
+    const text = composeResolution(outcome, 'food', 'skip', snake, 'frog');
+    assert.ok(text.includes('generic line'));
+  });
+});
+
+describe('Endings — every death named, every victory sung', () => {
+  test('every predator, trap, and hazard kind has an epitaph', () => {
+    const snake = new SnakeAgent({});
+    const killers = [...KINDS.predator, ...KINDS.trap, ...KINDS.hazard, 'burning-ground'];
+    for (const kind of killers) {
+      const text = composeEpitaph({ type: 'any', kind }, snake, 20);
+      assert.ok(text.length > 40, `weak epitaph for ${kind}`);
+      assert.ok(text.includes('20 turns'), `epitaph for ${kind} should count the turns`);
+      assert.ok(text.includes('3 scales'), `epitaph for ${kind} should measure the body`);
+    }
+  });
+
+  test('unknown killer falls back to the default epitaph', () => {
+    const snake = new SnakeAgent({});
+    const text = composeEpitaph(null, snake, 5);
+    assert.ok(text.includes('story ends') || text.includes('ended here'));
+  });
+
+  test('victory coda mentions length and turns', () => {
+    const snake = new SnakeAgent({});
+    snake.grow();
+    const text = composeVictoryCoda(snake, 42);
+    assert.ok(text.includes('4 scales long'));
+    assert.ok(text.includes('42 turns'));
+  });
+
+  test('simulator composes an epitaph on encounter death', () => {
+    const sim = new Simulator({ attribute: 'strength', equipment: [], personality: [] }, 'epitaph-test', 'easy');
+    sim.snake.health = 1; // One hit from death
+    sim.currentEncounter = {
+      type: 'trap',
+      entity: { id: 'trap-test', type: 'trap', kind: 'snare' },
+      position: { x: sim.snake.x, y: sim.snake.y },
+      predicament: 'test',
+    };
+    sim.resolveEncounterWithChoice('take-damage'); // -4 health, guaranteed death
+    assert.ok(sim.gameOver);
+    assert.ok(sim.epitaph, 'death should compose an epitaph');
+    assert.ok(sim.epitaph.includes('wire'), 'snare death should mention the wire');
+    assert.ok(sim.getRunResult().epitaph === sim.epitaph);
   });
 });
 

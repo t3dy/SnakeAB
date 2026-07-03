@@ -9,7 +9,7 @@ import { Pathfinding } from '../agents/Pathfinding.js';
 import { EncounterResolver } from '../encounters/EncounterResolver.js';
 import { TERRAIN, getTerrainProps } from '../world/Terrain.js';
 import { DIFFICULTIES } from '../game/Progression.js';
-import { composePredicament, composeNarration } from '../narrative/Narrator.js';
+import { composePredicament, composeNarration, composeEpitaph, composeVictoryCoda } from '../narrative/Narrator.js';
 
 export class Simulator {
   constructor(draftConfig = {}, seed = 'default', difficulty = 'medium') {
@@ -75,12 +75,14 @@ export class Simulator {
     const terrainProps = getTerrainProps(terrain);
     if (terrainProps.damagePerTurn) {
       this.snake.takeDamage(terrainProps.damagePerTurn);
+      this.lastThreat = { type: 'terrain', kind: 'burning-ground' };
       this.addLog(`🔥 Hazard damage! Health: ${this.snake.health}`);
     }
 
     // Check for defeat
     if (!this.snake.isAlive()) {
       this.gameOver = true;
+      this.epitaph = composeEpitaph(this.lastThreat, this.snake, this.turn);
       this.addLog('☠️ Snake died.');
       return;
     }
@@ -130,6 +132,7 @@ export class Simulator {
         this.gameOver = true;
         this.victory = true;
         this.snake.addScore(Math.round(100 * this.scoreMultiplier));
+        this.epitaph = composeVictoryCoda(this.snake, this.turn);
         this.addLog('🏁 Goal reached! Victory!');
         return;
       }
@@ -194,6 +197,8 @@ export class Simulator {
       this.snake.gainHealth(outcome.health);
     } else if (outcome.health < 0) {
       this.snake.takeDamage(-outcome.health);
+      // Remember who drew blood — the epitaph names the killer
+      this.lastThreat = { type: entity.type, kind: entity.kind };
     }
     if (outcome.score !== 0) {
       this.snake.addScore(Math.round(outcome.score * this.scoreMultiplier));
@@ -236,6 +241,7 @@ export class Simulator {
       this.snake.recordPosition(encounter.position.x, encounter.position.y);
     } else {
       this.gameOver = true;
+      this.epitaph = composeEpitaph(this.lastThreat, this.snake, this.turn);
       this.addLog('☠️ You died.');
     }
 
@@ -253,6 +259,8 @@ export class Simulator {
       victory: this.victory,
       healthRemaining: this.snake.health,
       resourcesGathered: this.snake.resourcesGathered,
+      finalLength: this.snake.length,
+      epitaph: this.epitaph || null,
     };
   }
 
