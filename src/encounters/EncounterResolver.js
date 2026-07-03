@@ -35,9 +35,15 @@ export class EncounterResolver {
       return null;
     }
 
-    // Weight options by personality
+    // Weight options by personality and synergies
     const weights = availableOptions.map(opt => {
       let weight = 1.0; // Base weight
+
+      // Apply synergy biases
+      weight += snake.getSynergyBonus('attackWeight') * (opt.id === 'attack' ? 1 : 0);
+      weight += snake.getSynergyBonus('hideWeight') * (opt.id === 'hide' ? 1 : 0);
+      weight += snake.getSynergyBonus('defenseWeight') * (opt.id === 'stand-ground' ? 1 : 0);
+      weight += snake.getSynergyBonus('fleeWeight') * (opt.id === 'flee' ? 1 : 0);
 
       // Apply personality biases
       if (entityType === ENCOUNTERS.PREDATOR) {

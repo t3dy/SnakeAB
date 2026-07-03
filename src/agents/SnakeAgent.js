@@ -1,7 +1,10 @@
 /**
  * SnakeAgent — Snake state and decision-making
  * Phase 1: Core agent state management
+ * Phase 4B: Equipment synergy system
  */
+
+import { getActiveSynergies, getSynergyBonusValue } from './EquipmentSynergies.js';
 
 export class SnakeAgent {
   constructor(draftConfig = {}) {
@@ -85,7 +88,27 @@ export class SnakeAgent {
       defense: this.equipment.includes('armor') ? 2 : 0,
       evasion: this.equipment.includes('camouflage') ? 2 : 0,
     };
+
+    // Add synergy bonuses
+    bonuses.combat += getSynergyBonusValue(this.equipment, 'combatDamage');
+    bonuses.defense += getSynergyBonusValue(this.equipment, 'defenseBonus');
+    bonuses.evasion += getSynergyBonusValue(this.equipment, 'evasion');
+
     return bonuses[checkType] || 0;
+  }
+
+  /**
+   * Get active synergies
+   */
+  getSynergies() {
+    return getActiveSynergies(this.equipment);
+  }
+
+  /**
+   * Get synergy bonus value
+   */
+  getSynergyBonus(bonusName) {
+    return getSynergyBonusValue(this.equipment, bonusName);
   }
 
   /**

@@ -1,7 +1,10 @@
 /**
  * DraftUI — Player draft interface for snake configuration
  * Phase 3.1: Character creation via card selection
+ * Phase 4B: Synergy hints
  */
+
+import { getSynergyText } from '../agents/EquipmentSynergies.js';
 
 export class DraftUI {
   constructor(onSubmit) {
@@ -142,6 +145,23 @@ export class DraftUI {
     }
 
     section.appendChild(cards);
+
+    // Synergy hints
+    const synergyText = getSynergyText(this.selection.equipment);
+    const synergyDiv = document.createElement('div');
+    synergyDiv.style.cssText = `
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background-color: #1a2a3a;
+      border-left: 3px solid #4a9eff;
+      font-size: 0.9rem;
+      color: #4a9eff;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    `;
+    synergyDiv.textContent = synergyText;
+    section.appendChild(synergyDiv);
+
     container.appendChild(section);
   }
 
