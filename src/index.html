@@ -231,6 +231,26 @@
     #gameover-display.active {
       display: block;
     }
+    /* Game-over sits over the world view so the story panel
+       stays readable beside it */
+    @media (min-width: 1025px) {
+      #gameover-display {
+        left: 25%;
+        box-shadow: 0 0 60px rgba(74, 158, 255, 0.35);
+      }
+    }
+    #show-results-btn {
+      display: none;
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 90;
+      padding: 0.7rem 1.2rem;
+      box-shadow: 0 0 20px rgba(74, 158, 255, 0.5);
+    }
+    #show-results-btn.active {
+      display: block;
+    }
     /* Responsive Design */
     @media (max-width: 1024px) {
       main {
@@ -374,6 +394,9 @@
 
   <!-- Game over screen (modal) -->
   <div id="gameover-display"></div>
+
+  <!-- Reopen results after reading the story -->
+  <button id="show-results-btn">🏆 Show Results</button>
 
   <script type="module" src="./main.js"></script>
 </body>

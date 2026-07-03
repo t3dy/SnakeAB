@@ -12,7 +12,8 @@
     "test:watch": "node --test --watch tests/**/*.test.js"
   },
   "dependencies": {
-    "seedrandom": "^3.0.5"
+    "seedrandom": "^3.0.5",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "vite": "^5.0.0"

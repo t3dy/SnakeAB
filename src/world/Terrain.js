@@ -21,11 +21,14 @@ export const TERRAIN_PROPS = {
   },
   [TERRAIN.RIVER]: {
     name: 'River',
-    movementCost: Infinity,
-    passable: false,
+    // Every snake can swim — it is slow and cold without fins.
+    // With swim-fins the water becomes a highway.
+    movementCost: 4,
+    passable: true,
     color: '#0066cc',
     emoji: '🌊',
-    passableWith: ['swim-fins'],
+    fastWith: ['swim-fins'],
+    fastCost: 1,
   },
   [TERRAIN.DIRT]: {
     name: 'Dirt',
@@ -40,10 +43,10 @@ export const TERRAIN_PROPS = {
     passable: false,
     color: '#666666',
     emoji: '🪨',
-    passableWith: ['climbing-gear'],
+    passableWith: ['climbing-gear', 'grappling-vine'],
   },
   [TERRAIN.HAZARD]: {
-    name: 'Hazard',
+    name: 'Ember-field',
     movementCost: 1,
     passable: true,
     damagePerTurn: 1,
@@ -53,10 +56,18 @@ export const TERRAIN_PROPS = {
 };
 
 /**
- * Get movement cost for terrain type
+ * Get movement cost for terrain type (equipment-aware)
  */
-export function getMovementCost(terrainType) {
-  return TERRAIN_PROPS[terrainType]?.movementCost ?? Infinity;
+export function getMovementCost(terrainType, equipment = []) {
+  const props = TERRAIN_PROPS[terrainType];
+  if (!props) return Infinity;
+  if (props.fastWith && props.fastWith.some(req => equipment.includes(req))) {
+    return props.fastCost;
+  }
+  if (props.passableWith && props.passableWith.some(req => equipment.includes(req))) {
+    return 1.5;
+  }
+  return props.movementCost;
 }
 
 /**

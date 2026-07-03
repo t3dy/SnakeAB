@@ -327,6 +327,54 @@ describe('Medicine & Treasure Encounters', () => {
   });
 });
 
+describe('Swashbuckler Kit', () => {
+  test('parley requires the plumed cap', () => {
+    const capless = new SnakeAgent({ attribute: 'intelligence', equipment: [], personality: [] });
+    const capped = new SnakeAgent({ attribute: 'intelligence', equipment: ['plumed-cap'], personality: [] });
+
+    const caplessOptions = EncounterResolver.getAvailableOptions(ENCOUNTERS.PREDATOR, capless);
+    const cappedOptions = EncounterResolver.getAvailableOptions(ENCOUNTERS.PREDATOR, capped);
+
+    assert.ok(!caplessOptions.some(o => o.id === 'parley'), 'no cap, no parley');
+    assert.ok(cappedOptions.some(o => o.id === 'parley'), 'cap unlocks parley');
+  });
+
+  test('vault requires coiled spring or dexterity', () => {
+    const clumsy = new SnakeAgent({ attribute: 'strength', equipment: [], personality: [] });
+    const springy = new SnakeAgent({ attribute: 'strength', equipment: ['coiled-spring'], personality: [] });
+    const nimble = new SnakeAgent({ attribute: 'dexterity', equipment: [], personality: [] });
+
+    const clumsyOpts = EncounterResolver.getAvailableOptions(ENCOUNTERS.HAZARD, clumsy);
+    const springyOpts = EncounterResolver.getAvailableOptions(ENCOUNTERS.HAZARD, springy);
+    const nimbleOpts = EncounterResolver.getAvailableOptions(ENCOUNTERS.HAZARD, nimble);
+
+    assert.ok(!clumsyOpts.some(o => o.id === 'vault'), 'strength snake cannot vault unaided');
+    assert.ok(springyOpts.some(o => o.id === 'vault'), 'coiled spring unlocks vault');
+    assert.ok(nimbleOpts.some(o => o.id === 'vault'), 'dexterity unlocks vault');
+  });
+
+  test('coiled spring grants an escape bonus', () => {
+    const snake = new SnakeAgent({ attribute: 'strength', equipment: ['coiled-spring'], personality: [] });
+    assert.equal(snake.getEquipmentBonus('escape'), 2);
+  });
+
+  test('parley outcome resolves with success and failure branches', () => {
+    const snake = new SnakeAgent({ attribute: 'intelligence', equipment: ['plumed-cap'], personality: [] });
+    for (let i = 0; i < 5; i++) {
+      const outcome = EncounterResolver.resolveOutcome(ENCOUNTERS.PREDATOR, snake, 'parley');
+      assert.equal(typeof outcome.text, 'string');
+      assert.ok(outcome.text.includes('🎭'));
+    }
+  });
+
+  test('vault outcome resolves', () => {
+    const snake = new SnakeAgent({ attribute: 'dexterity', equipment: ['coiled-spring'], personality: [] });
+    const outcome = EncounterResolver.resolveOutcome(ENCOUNTERS.HAZARD, snake, 'vault');
+    assert.equal(typeof outcome.text, 'string');
+    assert.ok(outcome.text.includes('🌀'));
+  });
+});
+
 describe('Attribute-Driven Stats', () => {
   test('drafted attribute should be stronger than baseline', () => {
     const snake = new SnakeAgent({ attribute: 'intelligence', equipment: [], personality: [] });

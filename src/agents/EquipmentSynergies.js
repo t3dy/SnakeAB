@@ -116,6 +116,42 @@ export const SYNERGIES = {
     },
   },
 
+  VAULTING_DUELIST: {
+    id: 'vaulting-duelist',
+    name: 'Vaulting Duelist',
+    description: 'Coiled Spring + Plumed Cap = escape with panache',
+    requires: ['coiled-spring', 'plumed-cap'],
+    bonuses: {
+      fleeWeight: 2,      // +2 bias toward dramatic exits
+      fleeBonus: 1,       // +1 to flee checks
+      parleyBonus: 1,     // +1 to talking your way out
+    },
+  },
+
+  VERDANT_ACROBAT: {
+    id: 'verdant-acrobat',
+    name: 'Verdant Acrobat',
+    description: 'Grappling Vine + Coiled Spring = the canopy is yours',
+    requires: ['grappling-vine', 'coiled-spring'],
+    bonuses: {
+      terrainCost: -1,    // Move easier over rough ground
+      fleeBonus: 2,       // +2 to flee checks
+      trapEscape: 2,      // +2 to escaping traps
+    },
+  },
+
+  MASKED_LEGEND: {
+    id: 'masked-legend',
+    name: 'Masked Legend',
+    description: 'Plumed Cap + Camouflage = nobody knows the serpent\'s face',
+    requires: ['plumed-cap', 'camouflage'],
+    bonuses: {
+      hideWeight: 2,      // +2 bias toward vanishing acts
+      evasion: 1,         // +1 to evasion
+      parleyBonus: 2,     // +2 to parley — mystery sells
+    },
+  },
+
   NATURE_WALKER: {
     id: 'nature-walker',
     name: 'Nature Walker',

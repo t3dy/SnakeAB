@@ -221,6 +221,14 @@ export const PREDATOR_ENCOUNTER = {
       description: 'Defensive stance (uses armor if available)',
       requirements: {}, // Always available
     },
+    {
+      id: 'parley',
+      name: 'Parley',
+      description: 'Talk your way out like a proper swashbuckler (needs Plumed Cap)',
+      requirements: {
+        equipment: 'plumed-cap',
+      },
+    },
   ],
   outcomes: {
     attack: {
@@ -255,11 +263,12 @@ export const PREDATOR_ENCOUNTER = {
     flee: {
       check: (snake, predator) => {
         // Dexterity check — drafting Dexterity matters, but a long
-        // body is slow to turn and slow to vanish
+        // body is slow to turn; a Coiled Spring evens the odds
         const dex = getStatValue(snake, 'dexterity');
+        const escapeBonus = snake.getEquipmentBonus ? snake.getEquipmentBonus('escape') : 0;
         const lengthPenalty = snake.getLengthPenalty ? snake.getLengthPenalty() : 0;
         const roll = Math.random() * 10;
-        return dex - lengthPenalty + roll > predator.baseThreat + 4;
+        return dex + escapeBonus - lengthPenalty + roll > predator.baseThreat + 4;
       },
       success: {
         health: 0,
@@ -304,6 +313,30 @@ export const PREDATOR_ENCOUNTER = {
         text: [
           '🐺 Found while hiding! Lost 2 health.',
           '🐺 A twig snaps. Spotted! -2 health.',
+        ],
+      },
+    },
+    parley: {
+      check: (snake, predator) => {
+        // Silver tongue check — intelligence and sheer nerve
+        const intel = getStatValue(snake, 'intelligence');
+        const roll = Math.random() * 10;
+        return intel + roll > predator.baseThreat + 4;
+      },
+      success: {
+        health: 0,
+        score: 30,
+        text: [
+          '🎭 You doff the plumed cap, spin a tale of venom, valor, and a hundred slain badgers — and the hunter decides easier meals exist.',
+          '🎭 A bow, a flourish, a speech about the indigestibility of heroes. Against all sense, it works.',
+        ],
+      },
+      failure: {
+        health: -2,
+        score: 5,
+        text: [
+          '🎭 The speech was magnificent. The audience was hungry. You escape with your dignity and two fewer health.',
+          '🎭 Halfway through your best couplet, the hunter lunges. Critics everywhere. -2 health.',
         ],
       },
     },
@@ -489,6 +522,17 @@ export const HAZARD_ENCOUNTER = {
   description: 'A dangerous zone blocks your path!',
   options: [
     {
+      id: 'vault',
+      name: 'Vault It',
+      description: 'Spring clean over the danger (needs Coiled Spring or Dexterity)',
+      requirements: {
+        either: [
+          { equipment: 'coiled-spring' },
+          { statCheck: 'dexterity', minValue: 5 },
+        ],
+      },
+    },
+    {
       id: 'push-through',
       name: 'Push Through',
       description: 'Go directly through (takes damage)',
@@ -508,6 +552,31 @@ export const HAZARD_ENCOUNTER = {
     },
   ],
   outcomes: {
+    vault: {
+      check: (snake) => {
+        const dex = getStatValue(snake, 'dexterity');
+        const spring = snake.equipment && snake.equipment.includes('coiled-spring') ? 4 : 0;
+        const lengthPenalty = snake.getLengthPenalty ? snake.getLengthPenalty() : 0;
+        const roll = Math.random() * 10;
+        return dex + spring - lengthPenalty + roll > 9;
+      },
+      success: {
+        health: 0,
+        score: 15,
+        text: [
+          '🌀 You coil, load, and LEAP — clean over the danger, landing with a flourish no one saw and everyone should have.',
+          '🌀 Up and over, a green arc against the sky. Swashbuckling is mostly physics and nerve, and you have both.',
+        ],
+      },
+      failure: {
+        health: -1,
+        score: 5,
+        text: [
+          '🌀 The leap is glorious. The landing is not. You clip the edge of the danger coming down. -1 health, +1 story.',
+          '🌀 Too much tail, not enough spring. You half-clear it, which is another way of saying you didn\'t. -1 health.',
+        ],
+      },
+    },
     'push-through': {
       health: -2,
       score: 5,

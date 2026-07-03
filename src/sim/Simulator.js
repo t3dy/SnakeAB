@@ -70,13 +70,18 @@ export class Simulator {
     this.snake.nextTurn();
     this.turn++;
 
-    // Apply hazard damage if in hazard zone
+    // Apply hazard damage if in hazard zone — unless the snake
+    // vaults it like the swashbuckler it is
     const terrain = this.world.getTerrain(this.snake.x, this.snake.y);
     const terrainProps = getTerrainProps(terrain);
     if (terrainProps.damagePerTurn) {
-      this.snake.takeDamage(terrainProps.damagePerTurn);
-      this.lastThreat = { type: 'terrain', kind: 'burning-ground' };
-      this.addLog(`🔥 Hazard damage! Health: ${this.snake.health}`);
+      if (this.tryVault()) {
+        this.addLog('🌀 You spring over the embers like a duelist over a tavern table — untouched!');
+      } else {
+        this.snake.takeDamage(terrainProps.damagePerTurn);
+        this.lastThreat = { type: 'terrain', kind: 'burning-ground' };
+        this.addLog(`🔥 The ember-field bites at your belly scales (-${terrainProps.damagePerTurn} health, now ${this.snake.health})`);
+      }
     }
 
     // Check for defeat
@@ -120,7 +125,17 @@ export class Simulator {
         return; // Pause for encounter resolution
       }
 
-      // Move snake
+      // Move snake (narrate the plunge when entering water)
+      const wasOnWater = this.world.getTerrain(this.snake.x, this.snake.y) === TERRAIN.RIVER;
+      const enteringWater = this.world.getTerrain(nextPos.x, nextPos.y) === TERRAIN.RIVER;
+      if (enteringWater && !wasOnWater) {
+        if (this.snake.equipment.includes('swim-fins')) {
+          this.addLog('🌊 You cut into the river like a thrown dagger — the fins make water into road.');
+        } else {
+          this.addLog('🌊 You breast the cold current, head high, tail working — slow going, but snakes were born swimming.');
+        }
+      }
+
       this.world.moveEntity(this.snake.x, this.snake.y, nextPos.x, nextPos.y, this.snake.id);
       this.snake.x = nextPos.x;
       this.snake.y = nextPos.y;
@@ -140,6 +155,20 @@ export class Simulator {
       // Recalculate path (regenerate every N turns or when stuck)
       this.currentPath = [];
     }
+  }
+
+  /**
+   * Try to vault a hazard tile — a Coiled Spring makes it easy,
+   * a dexterous snake can manage it unaided, and a long body
+   * drags through the embers
+   */
+  tryVault() {
+    const hasSpring = this.snake.equipment.includes('coiled-spring');
+    const dex = this.snake.getAttributeValue('dexterity');
+    const lengthPenalty = this.snake.getLengthPenalty();
+    const roll = Math.random() * 10;
+    const bonus = hasSpring ? 4 : 0;
+    return dex + bonus - lengthPenalty + roll > 10;
   }
 
   /**
@@ -289,6 +318,7 @@ export class Simulator {
       gameOver: this.gameOver,
       victory: this.victory,
       encounter: this.currentEncounter,
+      worldId: `${this.seed}:${this.difficulty}`,
       path: this.currentPath.slice(this.pathIndex), // Remaining planned route
       log: this.log.slice(-10), // Last 10 log entries
     };

@@ -5,6 +5,7 @@
 
 import { Simulator } from './sim/Simulator.js';
 import { Renderer } from './ui/Renderer.js';
+import { IsoRenderer } from './ui/IsoRenderer.js';
 import { DraftUI } from './ui/DraftUI.js';
 import { EncounterUI } from './ui/EncounterUI.js';
 import { EncounterResolver } from './encounters/EncounterResolver.js';
@@ -42,6 +43,10 @@ function init() {
   document.getElementById('pause-btn').addEventListener('click', togglePause);
   document.getElementById('step-btn').addEventListener('click', stepGame);
   document.getElementById('speed-slider').addEventListener('input', updateSpeed);
+  document.getElementById('show-results-btn').addEventListener('click', () => {
+    document.getElementById('show-results-btn').classList.remove('active');
+    document.getElementById('gameover-display').classList.add('active');
+  });
 
   console.log('✓ UI initialized');
 }
@@ -82,8 +87,16 @@ function startGame(draftConfig) {
   // Create simulator with draft config
   appState.simulator = new Simulator(draftConfig, seed, difficulty);
 
-  // Create renderer
-  appState.renderer = new Renderer('game-canvas');
+  // Create renderer once and reuse it across runs — isometric 3D,
+  // with the 2D canvas renderer as a fallback if WebGL is unavailable
+  if (!appState.renderer) {
+    try {
+      appState.renderer = new IsoRenderer('game-canvas');
+    } catch (e) {
+      console.warn('WebGL unavailable, falling back to 2D renderer:', e);
+      appState.renderer = new Renderer('game-canvas');
+    }
+  }
 
   // Wire up encounter UI callback
   appState.encounterUI.onOptionSelected = handleEncounterChoice;
@@ -363,6 +376,16 @@ function showGameOverScreen(state, newlyUnlocked) {
   againBtn.addEventListener('click', resetToDraft);
   display.appendChild(againBtn);
 
+  // Let the player read the full story with the modal out of the way
+  const storyBtn = document.createElement('button');
+  storyBtn.textContent = '📖 Read the Story';
+  storyBtn.style.cssText = 'width:100%;margin-top:0.5rem;padding:0.7rem;font-size:0.9rem;background:#1a3a4a;color:#4a9eff;';
+  storyBtn.addEventListener('click', () => {
+    display.classList.remove('active');
+    document.getElementById('show-results-btn').classList.add('active');
+  });
+  display.appendChild(storyBtn);
+
   display.classList.add('active');
 }
 
@@ -371,6 +394,7 @@ function showGameOverScreen(state, newlyUnlocked) {
  */
 function resetToDraft() {
   document.getElementById('gameover-display').classList.remove('active');
+  document.getElementById('show-results-btn').classList.remove('active');
   appState.encounterUI.hide();
   appState.encounterUI.onOptionSelected = handleEncounterChoice;
   appState.simulator = null;

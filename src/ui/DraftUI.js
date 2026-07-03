@@ -151,8 +151,11 @@ export class DraftUI {
       { id: 'camouflage', name: '🫥 Camouflage', desc: 'Hide from predators' },
       { id: 'venom', name: '☠️ Venom', desc: 'Combat bonus' },
       { id: 'climbing-gear', name: '🧗 Climbing Gear', desc: 'Traverse rocky terrain' },
-      { id: 'swim-fins', name: '🏊 Swim Fins', desc: 'Cross water' },
+      { id: 'swim-fins', name: '🏊 Swim Fins', desc: 'Swim fast — water becomes road' },
       { id: 'torch', name: '🔦 Torch', desc: 'Reveal hazards' },
+      { id: 'coiled-spring', name: '🌀 Coiled Spring', desc: 'Vault hazards, springy escapes' },
+      { id: 'grappling-vine', name: '🌿 Grappling Vine', desc: 'Swing across rocky ground' },
+      { id: 'plumed-cap', name: '🎭 Plumed Cap', desc: 'Parley with predators' },
     ];
 
     const cards = document.createElement('div');

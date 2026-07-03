@@ -131,19 +131,19 @@ const PREDICAMENTS = {
   },
   hazard: {
     fire: [
-      'Smoke crawls low through the grass stems. Somewhere upwind, a brushfire is eating the field, and the wind is deciding whose side it is on.',
-      'Heat shimmers over the trail ahead. Fire — the one hunter that cannot be bitten, dodged, or charmed.',
+      'Smoke crawls low through the grass stems like dungeon-mist under a door. Somewhere upwind a brushfire is eating the field — the meadow has corridors, and this one is burning.',
+      'Heat shimmers over the trail ahead. Fire: the one dungeon boss that cannot be bitten, dodged, or charmed. An adventurer measures the gap and grins anyway.',
     ],
     marsh: [
-      'The ground ahead goes soft and sour. Marsh gas beads up through black mud that would swallow a snake and keep it.',
-      'Bubbles rise and burst on the black water. The marsh is patient. It has eaten faster things than you.',
+      'The ground ahead goes soft and sour — the meadow\'s own oubliette. Marsh gas beads up through black mud that has kept every treasure ever dropped in it.',
+      'Bubbles rise and burst on the black water. Every dungeon has a flooded level. This is yours.',
     ],
     scree: [
-      'The trail crosses a slope of scorched scree — stone hot enough to sear belly scales, with no shade for a body-length in any direction.',
-      'Sun-blasted rock stretches ahead, shimmering. Crossing it will cost you; the sun does not haggle.',
+      'The trail crosses a slope of scorched scree — a gauntlet of hot stone with no shade for a body-length in any direction. Classic trap-corridor. Probably no pressure plates. Probably.',
+      'Sun-blasted rock stretches ahead, shimmering like a dragon\'s doorstep. Crossing costs; the sun does not haggle with adventurers.',
     ],
     default: [
-      'The land itself turns hostile here — no teeth, no talons, just a patient danger that outlasts everything.',
+      'The land itself turns hostile here — no teeth, no talons, just the dungeon\'s oldest trick: a corridor that hurts to cross.',
     ],
   },
   medicine: {
@@ -222,6 +222,18 @@ const RESOLUTION_FLAVOR = {
   'hoard:choose': [
     '✨ You coil past the foil and glass and take only the true shine — the ring, smooth and cold and old. A discerning serpent. A dragon in miniature.',
   ],
+  'hawk:parley': [
+    '🎭 You address the hawk\'s shadow directly: a speech on the toughness of adventurer meat and the abundance of voles. The wings tilt away. Sold.',
+  ],
+  'fox:parley': [
+    '🎭 Foxes respect cleverness above all. You trade three riddles and a lie, and the fox trots off grinning — foxes always grin — with the better bargain, it thinks.',
+  ],
+  'heron:parley': [
+    '🎭 One does not out-wait a heron, so you out-talk it: a filibuster on fish, delivered from just beyond beak range. The yellow eye blinks. You are already gone.',
+  ],
+  'badger:parley': [
+    '🎭 The badger has never once been talked out of anything, but the sheer novelty of a snake in a plumed cap buys you the three heartbeats you need.',
+  ],
 };
 
 /* ------------------------------------------------------------------ */
@@ -250,6 +262,8 @@ const OPTION_PHRASES = {
   'push-through': 'push straight through',
   detour: 'circle wide around',
   wait: 'wait it out',
+  vault: 'coil, load, and vault clean over the danger',
+  parley: 'doff the plumed cap and talk fast',
 };
 
 /* Personality voices — why the snake chose what it chose */

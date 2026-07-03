@@ -3,7 +3,7 @@
  * Phase 1: Core pathfinding for autonomous movement
  */
 
-import { TERRAIN, isPassable } from '../world/Terrain.js';
+import { TERRAIN, isPassable, getMovementCost } from '../world/Terrain.js';
 
 export class Pathfinding {
   constructor(world, equipment = []) {
@@ -73,8 +73,13 @@ export class Pathfinding {
         const terrain = this.world.getTerrain(neighbor.x, neighbor.y);
         if (!isPassable(terrain, this.equipment)) continue;
 
+        // Cost-aware: swimming without fins is slow, dirt drags,
+        // grass is a highway — the snake weighs its route
+        const stepCost = getMovementCost(terrain, this.equipment);
+        if (!isFinite(stepCost)) continue;
+
         const nKey = key(neighbor.x, neighbor.y);
-        const tentativeG = (gScore.get(current) || 0) + 1;
+        const tentativeG = (gScore.get(current) || 0) + stepCost;
 
         if (!gScore.has(nKey) || tentativeG < gScore.get(nKey)) {
           cameFrom.set(nKey, current);

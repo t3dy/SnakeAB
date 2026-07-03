@@ -10,21 +10,25 @@ describe('Terrain', () => {
   test('should return correct movement costs', () => {
     assert.equal(getMovementCost(TERRAIN.GRASS), 1);
     assert.equal(getMovementCost(TERRAIN.DIRT), 2);
-    assert.equal(getMovementCost(TERRAIN.RIVER), Infinity);
+    // Every snake can swim — slowly without fins, fast with them
+    assert.equal(getMovementCost(TERRAIN.RIVER), 4);
+    assert.equal(getMovementCost(TERRAIN.RIVER, ['swim-fins']), 1);
     assert.equal(getMovementCost(TERRAIN.ROCKY), Infinity);
+    assert.equal(getMovementCost(TERRAIN.ROCKY, ['climbing-gear']), 1.5);
   });
 
   test('should identify passable terrain', () => {
     assert.equal(isPassable(TERRAIN.GRASS), true);
     assert.equal(isPassable(TERRAIN.DIRT), true);
-    assert.equal(isPassable(TERRAIN.RIVER), false);
+    // Snakes are born swimmers: rivers are passable to all
+    assert.equal(isPassable(TERRAIN.RIVER), true);
     assert.equal(isPassable(TERRAIN.ROCKY), false);
   });
 
   test('should allow passage with equipment', () => {
     assert.equal(isPassable(TERRAIN.RIVER, ['swim-fins']), true);
-    assert.equal(isPassable(TERRAIN.RIVER, ['climbing-gear']), false);
     assert.equal(isPassable(TERRAIN.ROCKY, ['climbing-gear']), true);
+    assert.equal(isPassable(TERRAIN.ROCKY, ['grappling-vine']), true);
     assert.equal(isPassable(TERRAIN.ROCKY, ['swim-fins']), false);
   });
 });

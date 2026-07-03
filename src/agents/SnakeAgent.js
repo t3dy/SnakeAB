@@ -125,12 +125,14 @@ export class SnakeAgent {
       combat: this.equipment.includes('venom') ? 2 : 0,
       defense: this.equipment.includes('armor') ? 2 : 0,
       evasion: this.equipment.includes('camouflage') ? 2 : 0,
+      escape: this.equipment.includes('coiled-spring') ? 2 : 0,
     };
 
     // Add synergy bonuses
     bonuses.combat += getSynergyBonusValue(this.equipment, 'combatDamage');
     bonuses.defense += getSynergyBonusValue(this.equipment, 'defenseBonus');
     bonuses.evasion += getSynergyBonusValue(this.equipment, 'evasion');
+    bonuses.escape += getSynergyBonusValue(this.equipment, 'fleeBonus');
 
     return bonuses[checkType] || 0;
   }
