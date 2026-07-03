@@ -153,6 +153,76 @@
       outline: none;
       border-color: #4a9eff;
     }
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      main {
+        flex-direction: column;
+      }
+      #world-container {
+        flex: 0 0 auto;
+        border-right: none;
+        border-bottom: 1px solid #333;
+        max-height: 50%;
+      }
+      #ui-container {
+        flex: 1;
+      }
+    }
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.2rem;
+      }
+      canvas {
+        max-width: 100%;
+        height: auto;
+        aspect-ratio: 1;
+      }
+      .panel {
+        padding: 0.75rem;
+      }
+      .buttons {
+        flex-direction: column;
+      }
+      button {
+        width: 100%;
+      }
+      .stat-row {
+        font-size: 0.75rem;
+      }
+    }
+    @media (max-width: 480px) {
+      #app {
+        height: auto;
+      }
+      main {
+        flex-direction: column;
+      }
+      header {
+        padding: 0.75rem;
+      }
+      header h1 {
+        font-size: 1rem;
+      }
+      #world-container {
+        padding: 0.5rem;
+      }
+      #ui-container {
+        padding: 0.5rem;
+      }
+      canvas {
+        width: 100%;
+        max-width: 400px;
+      }
+      .log {
+        font-size: 0.65rem;
+      }
+    }
+    /* Dark mode (respects prefers-color-scheme if needed) */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #000;
+      }
+    }
   </style>
 </head>
 <body>

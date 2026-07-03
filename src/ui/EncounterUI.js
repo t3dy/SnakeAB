@@ -1,12 +1,16 @@
 /**
  * EncounterUI — Display encounters and player choice UI
  * Phase 3.2: Encounter popup with decision options
+ * Phase 4C: Animations
  */
+
+import { AnimationSystem, fadeIn, slideIn, colorChange } from './Animations.js';
 
 export class EncounterUI {
   constructor() {
     this.currentEncounter = null;
     this.onOptionSelected = null;
+    this.animationSystem = new AnimationSystem();
   }
 
   /**
@@ -107,6 +111,11 @@ export class EncounterUI {
 
     display.appendChild(optionsContainer);
     display.classList.add('active');
+
+    // Add animations
+    this.animationSystem.add(fadeIn(title, 300));
+    this.animationSystem.add(fadeIn(desc, 400));
+    this.animationSystem.add(fadeIn(optionsContainer, 500));
   }
 
   /**
@@ -150,6 +159,13 @@ export class EncounterUI {
     outcomeEl.appendChild(resultSummary);
     display.appendChild(outcomeEl);
 
+    // Animate outcome color based on success/failure
+    const isPositive = outcome.health > 0 || outcome.score > 0;
+    const fromColor = '#1a3a4a';
+    const toColor = isPositive ? '#0a3a0a' : '#3a1a1a';
+    this.animationSystem.add(colorChange(outcomeEl, fromColor, toColor, 500));
+    this.animationSystem.add(fadeIn(outcomeEl, 400));
+
     // Close button
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '▶️ Continue';
@@ -165,6 +181,7 @@ export class EncounterUI {
       }
     });
     display.appendChild(closeBtn);
+    this.animationSystem.add(fadeIn(closeBtn, 500));
   }
 
   /**
