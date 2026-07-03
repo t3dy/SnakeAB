@@ -219,11 +219,13 @@ export const PREDATOR_ENCOUNTER = {
   outcomes: {
     attack: {
       check: (snake, predator) => {
-        // Strength check vs predator threat — drafting Strength matters
+        // Strength check vs predator threat — drafting Strength matters,
+        // and a long body adds intimidation and reach
         const snakeStrength = getStatValue(snake, 'strength');
         const bonus = snake.getEquipmentBonus('combat');
+        const lengthBonus = snake.getLengthBonus ? snake.getLengthBonus() : 0;
         const roll = Math.random() * 10;
-        return snakeStrength + bonus + roll > predator.baseThreat + 5;
+        return snakeStrength + bonus + lengthBonus + roll > predator.baseThreat + 5;
       },
       success: {
         health: 0,
@@ -246,10 +248,12 @@ export const PREDATOR_ENCOUNTER = {
     },
     flee: {
       check: (snake, predator) => {
-        // Dexterity check — drafting Dexterity matters
+        // Dexterity check — drafting Dexterity matters, but a long
+        // body is slow to turn and slow to vanish
         const dex = getStatValue(snake, 'dexterity');
+        const lengthPenalty = snake.getLengthPenalty ? snake.getLengthPenalty() : 0;
         const roll = Math.random() * 10;
-        return dex + roll > predator.baseThreat + 4;
+        return dex - lengthPenalty + roll > predator.baseThreat + 4;
       },
       success: {
         health: 0,
@@ -271,11 +275,13 @@ export const PREDATOR_ENCOUNTER = {
     },
     hide: {
       check: (snake, predator) => {
-        // Stealth check (camouflage + intelligence)
+        // Stealth check (camouflage + intelligence) — a long body
+        // is more of it to tuck out of sight
         const bonus = snake.getEquipmentBonus('evasion');
         const intel = getStatValue(snake, 'intelligence');
+        const lengthPenalty = snake.getLengthPenalty ? snake.getLengthPenalty() : 0;
         const roll = Math.random() * 10;
-        return intel + bonus + roll > predator.baseThreat + 4;
+        return intel + bonus - lengthPenalty + roll > predator.baseThreat + 4;
       },
       success: {
         health: 0,

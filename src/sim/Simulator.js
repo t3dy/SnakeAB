@@ -9,6 +9,7 @@ import { Pathfinding } from '../agents/Pathfinding.js';
 import { EncounterResolver } from '../encounters/EncounterResolver.js';
 import { TERRAIN, getTerrainProps } from '../world/Terrain.js';
 import { DIFFICULTIES } from '../game/Progression.js';
+import { composePredicament, composeNarration } from '../narrative/Narrator.js';
 
 export class Simulator {
   constructor(draftConfig = {}, seed = 'default', difficulty = 'medium') {
@@ -29,6 +30,7 @@ export class Simulator {
     if (snakeEntity) {
       this.snake.x = 1;
       this.snake.y = 1;
+      this.snake.recordPosition(1, 1);
     }
 
     // Initialize pathfinding
@@ -104,13 +106,15 @@ export class Simulator {
       const collidedEntity = entities.find(e => e.type !== 'snake' && e.type !== 'goal');
 
       if (collidedEntity) {
-        // Trigger encounter
+        // Trigger encounter — compose the predicament now so both
+        // the popup and the story panel can tell the same scene
         this.currentEncounter = {
           type: collidedEntity.type,
           entity: collidedEntity,
           position: nextPos,
+          predicament: composePredicament(collidedEntity.type, collidedEntity.kind, this.snake),
         };
-        this.addLog(`⚡ Encounter: ${collidedEntity.type} at (${nextPos.x}, ${nextPos.y})`);
+        this.addLog(`⚡ Encounter: ${collidedEntity.kind || collidedEntity.type} at (${nextPos.x}, ${nextPos.y})`);
         return; // Pause for encounter resolution
       }
 
@@ -118,6 +122,7 @@ export class Simulator {
       this.world.moveEntity(this.snake.x, this.snake.y, nextPos.x, nextPos.y, this.snake.id);
       this.snake.x = nextPos.x;
       this.snake.y = nextPos.y;
+      this.snake.recordPosition(nextPos.x, nextPos.y);
 
       // Check for goal
       const currentEntities = this.world.getEntitiesAt(this.snake.x, this.snake.y);
@@ -176,6 +181,10 @@ export class Simulator {
     const encounter = this.currentEncounter;
     const entity = encounter.entity;
 
+    // What could the snake have done instead? (for narration)
+    const availableOptions = EncounterResolver.getAvailableOptions(entity.type, this.snake)
+      .map(o => o.id);
+
     // Resolve the outcome (stat checks happen here)
     const outcome = EncounterResolver.resolveOutcome(entity.type, this.snake, optionId);
     this.snake.recordEncounter(`${entity.type}-encounter`, outcome.success);
@@ -190,12 +199,29 @@ export class Simulator {
       this.snake.addScore(Math.round(outcome.score * this.scoreMultiplier));
     }
 
+    // Growth: eating a meal adds a body segment
+    if (entity.type === 'food' && optionId === 'eat') {
+      this.snake.grow();
+    }
+
     this.addLog(`${outcome.text} [${optionId}]`);
 
     // Track gathered resources
     if (['food', 'medicine', 'treasure'].includes(entity.type)) {
       this.snake.resourcesGathered++;
     }
+
+    // Compose the full three-beat narration for the story panel
+    outcome.narration = composeNarration({
+      entityType: entity.type,
+      kind: entity.kind,
+      chosenOption: optionId,
+      rejectedOptions: availableOptions.filter(id => id !== optionId),
+      outcome,
+      snake: this.snake,
+      predicament: encounter.predicament,
+    });
+    this.lastNarration = outcome.narration;
 
     // The encounter is spent: remove the entity so the snake
     // can't loop on the same tile (fled predators wander off,
@@ -207,6 +233,7 @@ export class Simulator {
       this.world.moveEntity(this.snake.x, this.snake.y, encounter.position.x, encounter.position.y, this.snake.id);
       this.snake.x = encounter.position.x;
       this.snake.y = encounter.position.y;
+      this.snake.recordPosition(encounter.position.x, encounter.position.y);
     } else {
       this.gameOver = true;
       this.addLog('☠️ You died.');
@@ -243,6 +270,8 @@ export class Simulator {
         maxHealth: this.snake.maxHealth,
         score: this.snake.score,
         alive: this.snake.alive,
+        length: this.snake.length,
+        segments: this.snake.segments.slice(),
       },
       world: {
         width: this.world.width,

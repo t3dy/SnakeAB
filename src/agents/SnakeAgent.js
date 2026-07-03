@@ -29,6 +29,11 @@ export class SnakeAgent {
     this.inventory = [];
     this.resourcesGathered = 0;
 
+    // Body: grows as the snake eats. A long snake strikes harder
+    // but is slower to flee and harder to hide.
+    this.length = 3;
+    this.segments = []; // Trail of recent positions, head first
+
     // History
     this.encounterHistory = {}; // { 'predator_id': { wins: 0, losses: 0 }, ... }
     this.turnCount = 0;
@@ -64,6 +69,41 @@ export class SnakeAgent {
    */
   isAlive() {
     return this.alive && this.health > 0;
+  }
+
+  /**
+   * Grow one segment (from eating)
+   */
+  grow() {
+    this.length++;
+  }
+
+  /**
+   * Escape penalty from body length: every 2 segments past the
+   * starting 3 make fleeing and hiding harder
+   */
+  getLengthPenalty() {
+    return Math.floor(Math.max(0, this.length - 3) / 2);
+  }
+
+  /**
+   * Intimidation bonus from body length: every 3 segments past
+   * the starting 3 make attacks and standing ground stronger
+   */
+  getLengthBonus() {
+    return Math.floor(Math.max(0, this.length - 3) / 3);
+  }
+
+  /**
+   * Record the head position; keep a trail as long as the body
+   */
+  recordPosition(x, y) {
+    if (this.segments.length === 0 || this.segments[0].x !== x || this.segments[0].y !== y) {
+      this.segments.unshift({ x, y });
+    }
+    while (this.segments.length > this.length) {
+      this.segments.pop();
+    }
   }
 
   /**

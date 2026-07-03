@@ -77,6 +77,7 @@ function startGame(draftConfig) {
   appState.draftConfig = draftConfig;
   appState.runRecorded = false;
   appState.encounterPending = false;
+  resetStory();
 
   // Create simulator with draft config
   appState.simulator = new Simulator(draftConfig, seed, difficulty);
@@ -180,11 +181,14 @@ function displayEncounter(encounter) {
 
   if (autopilot) {
     // Autobattler mode: the snake's personality decides, the
-    // story unfolds in the log — no popup, no interruption
-    appState.simulator.resolveEncounterWithChoice(suggestedOption);
+    // story unfolds in the story panel — no popup, no interruption
+    const outcome = appState.simulator.resolveEncounterWithChoice(suggestedOption);
     const state = appState.simulator.getState();
     appState.renderer.render(state);
     updateUI(state);
+    if (outcome && outcome.narration) {
+      appendStory(outcome.narration, state.turn);
+    }
     appState.encounterPending = false;
 
     if (state.gameOver) {
@@ -193,13 +197,56 @@ function displayEncounter(encounter) {
     return;
   }
 
-  // Manual mode: show the popup, player decides
+  // Manual mode: show the popup (with the narrated predicament),
+  // player decides
+  const narratedDef = {
+    ...encounterDef,
+    description: encounter.predicament || encounterDef.description,
+  };
   appState.encounterUI.display(
-    encounterDef,
+    narratedDef,
     availableOptions,
     suggestedOption,
     handleEncounterChoice
   );
+}
+
+/**
+ * Append a three-beat narration entry to the story panel
+ */
+function appendStory(narration, turn) {
+  const panel = document.getElementById('story-panel');
+  if (!panel) return;
+
+  // Remove placeholder
+  const empty = panel.querySelector('.story-empty');
+  if (empty) empty.remove();
+
+  const entry = document.createElement('div');
+  entry.className = 'story-entry';
+  entry.innerHTML = `
+    <div class="story-turn">Turn ${turn}</div>
+    <div class="story-predicament">${escapeHtml(narration.predicament)}</div>
+    <div class="story-deliberation">${escapeHtml(narration.deliberation)}</div>
+    <div class="story-resolution">${escapeHtml(narration.resolution)}</div>
+  `;
+  panel.appendChild(entry);
+
+  // Keep the last 12 entries
+  while (panel.children.length > 12) {
+    panel.removeChild(panel.firstChild);
+  }
+  panel.scrollTop = panel.scrollHeight;
+}
+
+/**
+ * Reset the story panel for a fresh run
+ */
+function resetStory() {
+  const panel = document.getElementById('story-panel');
+  if (panel) {
+    panel.innerHTML = '<div class="story-empty">The story of this snake has not yet been written…</div>';
+  }
 }
 
 /**
@@ -227,6 +274,11 @@ function handleEncounterChoice(optionId) {
   const state = appState.simulator.getState();
   appState.renderer.render(state);
   updateUI(state);
+
+  // The story panel gets the full narration too
+  if (outcome && outcome.narration) {
+    appendStory(outcome.narration, state.turn);
+  }
 
   // Display outcome (Continue button fires 'continue' above)
   appState.encounterUI.displayOutcome(outcome);
@@ -357,6 +409,7 @@ function stepGame() {
 function updateUI(state) {
   document.getElementById('turn-count').textContent = state.turn;
   document.getElementById('health-count').textContent = `${state.snake.health} / ${state.snake.maxHealth}`;
+  document.getElementById('length-count').textContent = state.snake.length;
   document.getElementById('score-count').textContent = state.snake.score;
 
   const log = document.getElementById('debug-log');

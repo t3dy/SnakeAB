@@ -75,6 +75,11 @@ export class EncounterResolver {
       }
 
       if (entityType === ENCOUNTERS.FOOD || entityType === ENCOUNTERS.MEDICINE || entityType === ENCOUNTERS.TREASURE) {
+        // Every snake is a hunter: eating and basking are the
+        // default instincts, not exceptions
+        if (opt.id === 'eat') weight += 2;
+        if (opt.id === 'use') weight += 1.5;
+
         if (opt.id === 'eat' && snake.hasPersonality('greedy')) {
           weight += 5;
         } else if (opt.id === 'save' && snake.hasPersonality('greedy')) {

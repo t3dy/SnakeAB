@@ -130,17 +130,33 @@ export class EncounterUI {
       buttonsContainer.remove();
     }
 
-    // Show outcome
+    // Show outcome — with full narration when available
     const outcomeEl = document.createElement('div');
     outcomeEl.style.cssText = `
-      font-size: 1.1rem;
+      font-size: 1rem;
       margin-top: 1.5rem;
       padding: 1rem;
       background: #0a3a0a;
       border-left: 4px solid #4a9eff;
       border-radius: 4px;
+      line-height: 1.55;
     `;
-    outcomeEl.innerHTML = `<strong>${outcome.text}</strong>`;
+
+    if (outcome.narration) {
+      const delib = document.createElement('div');
+      delib.style.cssText = 'color: #8fb8dd; font-style: italic; margin-bottom: 0.6rem;';
+      delib.textContent = outcome.narration.deliberation;
+      outcomeEl.appendChild(delib);
+
+      const resol = document.createElement('div');
+      resol.style.cssText = 'color: #a8d5b0;';
+      resol.textContent = outcome.narration.resolution;
+      outcomeEl.appendChild(resol);
+    } else {
+      const plain = document.createElement('strong');
+      plain.textContent = outcome.text;
+      outcomeEl.appendChild(plain);
+    }
 
     const resultSummary = document.createElement('div');
     resultSummary.style.cssText = `

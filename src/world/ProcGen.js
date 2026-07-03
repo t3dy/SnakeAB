@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ProcGen — Procedural world generation
  * Phase 1: Generate worlds with validated pathfinding
  */
@@ -6,6 +6,16 @@
 import { World } from './World.js';
 import { TERRAIN } from './Terrain.js';
 import { Pathfinding } from '../agents/Pathfinding.js';
+import { KINDS } from '../narrative/Narrator.js';
+
+/**
+ * Pick an entity kind with the seeded RNG so worlds stay reproducible
+ */
+function pickKind(rng, type) {
+  const pool = KINDS[type];
+  if (!pool || pool.length === 0) return null;
+  return pool[Math.floor(rng.next() * pool.length)];
+}
 
 /**
  * Simple seeded RNG
@@ -109,7 +119,7 @@ export class ProcGen {
     for (let i = 0; i < numFood; i++) {
       const tile = world.getRandomEmptyTile(TERRAIN.GRASS);
       if (tile) {
-        world.addEntity({ id: `food-${i}`, type: 'food', value: 10 }, tile.x, tile.y);
+        world.addEntity({ id: `food-${i}`, type: 'food', value: 10, kind: pickKind(rng, 'food') }, tile.x, tile.y);
       }
     }
 
@@ -118,7 +128,7 @@ export class ProcGen {
     for (let i = 0; i < numMedicine; i++) {
       const tile = world.getRandomEmptyTile(TERRAIN.GRASS);
       if (tile) {
-        world.addEntity({ id: `medicine-${i}`, type: 'medicine', value: 15 }, tile.x, tile.y);
+        world.addEntity({ id: `medicine-${i}`, type: 'medicine', value: 15, kind: pickKind(rng, 'medicine') }, tile.x, tile.y);
       }
     }
 
@@ -127,7 +137,7 @@ export class ProcGen {
     for (let i = 0; i < numTreasure; i++) {
       const tile = world.getRandomEmptyTile(TERRAIN.GRASS);
       if (tile) {
-        world.addEntity({ id: `treasure-${i}`, type: 'treasure', value: 50 }, tile.x, tile.y);
+        world.addEntity({ id: `treasure-${i}`, type: 'treasure', value: 50, kind: pickKind(rng, 'treasure') }, tile.x, tile.y);
       }
     }
 
@@ -136,7 +146,7 @@ export class ProcGen {
     for (let i = 0; i < numPredators; i++) {
       const tile = world.getRandomEmptyTile(TERRAIN.GRASS);
       if (tile) {
-        world.addEntity({ id: `predator-${i}`, type: 'predator', threat: 5 }, tile.x, tile.y);
+        world.addEntity({ id: `predator-${i}`, type: 'predator', threat: 5, kind: pickKind(rng, 'predator') }, tile.x, tile.y);
       }
     }
 
@@ -145,7 +155,7 @@ export class ProcGen {
     for (let i = 0; i < numTraps; i++) {
       const tile = world.getRandomEmptyTile(TERRAIN.GRASS);
       if (tile) {
-        world.addEntity({ id: `trap-${i}`, type: 'trap', danger: 3 }, tile.x, tile.y);
+        world.addEntity({ id: `trap-${i}`, type: 'trap', danger: 3, kind: pickKind(rng, 'trap') }, tile.x, tile.y);
       }
     }
 
@@ -154,7 +164,7 @@ export class ProcGen {
     for (let i = 0; i < numNPCs; i++) {
       const tile = world.getRandomEmptyTile(TERRAIN.GRASS);
       if (tile) {
-        world.addEntity({ id: `npc-${i}`, type: 'npc', disposition: 'neutral' }, tile.x, tile.y);
+        world.addEntity({ id: `npc-${i}`, type: 'npc', disposition: 'neutral', kind: pickKind(rng, 'npc') }, tile.x, tile.y);
       }
     }
 

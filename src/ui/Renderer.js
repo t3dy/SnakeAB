@@ -72,12 +72,36 @@ export class Renderer {
   }
 
   /**
-   * Draw the snake with a rounded body and directional eyes
+   * Draw the snake with a rounded body and directional eyes,
+   * plus trailing body segments that grow as it eats
    */
   drawSnake(snake) {
-    const x = this.offsetX + snake.x * this.cellSize;
-    const y = this.offsetY + snake.y * this.cellSize;
     const s = this.cellSize;
+
+    // Body segments (skip index 0 — that's the head)
+    if (snake.segments && snake.segments.length > 1) {
+      for (let i = snake.segments.length - 1; i >= 1; i--) {
+        const seg = snake.segments[i];
+        const t = i / snake.segments.length; // 0 near head → 1 at tail
+        const radius = (s / 2.6) * (1 - t * 0.45); // Taper toward tail
+        this.ctx.fillStyle = `rgba(46, 174, 105, ${1 - t * 0.35})`;
+        this.ctx.strokeStyle = 'rgba(26, 122, 68, 0.8)';
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        this.ctx.arc(
+          this.offsetX + seg.x * s + s / 2,
+          this.offsetY + seg.y * s + s / 2,
+          radius,
+          0,
+          Math.PI * 2
+        );
+        this.ctx.fill();
+        this.ctx.stroke();
+      }
+    }
+
+    const x = this.offsetX + snake.x * s;
+    const y = this.offsetY + snake.y * s;
 
     // Body
     this.ctx.fillStyle = '#3ddc84';
@@ -171,17 +195,25 @@ export class Renderer {
 
     const icons = {
       food: '🍎',
-      medicine: '💊',
-      treasure: '💰',
+      medicine: '☀️',
+      treasure: '✨',
       predator: '🐺',
       goal: '🏁',
-      npc: '🧙',
+      npc: '🐍',
       trap: '⚠️',
       hazard: '🔥',
     };
 
+    // Kind-specific icons — the snake's world up close
+    const kindIcons = {
+      hawk: '🦅', fox: '🦊', heron: '🐦', badger: '🦡',
+      mouse: '🐭', frog: '🐸', eggs: '🥚', cricket: '🦗',
+      snare: '🪤', sap: '🍯', rockfall: '🪨',
+      fire: '🔥', marsh: '💨', scree: '☄️',
+    };
+
     const color = colors[entity.type] || '#fff';
-    const icon = icons[entity.type] || '?';
+    const icon = (entity.kind && kindIcons[entity.kind]) || icons[entity.type] || '?';
 
     // Goal gets a pulsing glow ring
     if (entity.type === 'goal') {
