@@ -1,6 +1,6 @@
 /**
  * SnakeAB — Main Application Entry Point
- * Phase 1-3: Core game + UI orchestration
+ * Phase 1-4: Core game + UI orchestration + progression
  */
 
 import { Simulator } from './sim/Simulator.js';
@@ -9,6 +9,7 @@ import { DraftUI } from './ui/DraftUI.js';
 import { EncounterUI } from './ui/EncounterUI.js';
 import { EncounterResolver } from './encounters/EncounterResolver.js';
 import { getEncounterDef } from './encounters/EncounterTypes.js';
+import { progression, DIFFICULTIES } from './game/Progression.js';
 
 // Application state
 const appState = {
@@ -20,7 +21,8 @@ const appState = {
   animationFrameId: null,
   lastTickTime: 0,
   encounterPending: false,
-  seedInput: 'default-seed',
+  draftConfig: null,
+  runRecorded: false,
 };
 
 /**
@@ -49,10 +51,10 @@ function init() {
  */
 function handleDraftSubmit(config) {
   console.log('Draft submitted:', config);
-  appState.seedInput = document.getElementById('seed-input')?.value || 'default-seed';
 
   // Hide draft UI
   const draftContainer = document.getElementById('draft-container');
+  draftContainer.innerHTML = '';
   draftContainer.style.display = 'none';
 
   // Show game UI
@@ -67,9 +69,14 @@ function handleDraftSubmit(config) {
  */
 function startGame(draftConfig) {
   const difficulty = draftConfig.difficulty || 'medium';
-  const seed = appState.seedInput;
+  // Custom seed if provided, otherwise a fresh random world each run
+  const seed = (draftConfig.seed && draftConfig.seed.trim()) || `run-${Date.now().toString(36)}`;
 
   console.log(`Starting game: difficulty=${difficulty}, seed=${seed}`);
+
+  appState.draftConfig = draftConfig;
+  appState.runRecorded = false;
+  appState.encounterPending = false;
 
   // Create simulator with draft config
   appState.simulator = new Simulator(draftConfig, seed, difficulty);
@@ -83,6 +90,12 @@ function startGame(draftConfig) {
   // Update UI
   document.getElementById('pause-btn').disabled = false;
   document.getElementById('step-btn').disabled = false;
+  document.getElementById('pause-btn').textContent = 'Pause';
+
+  // First render immediately so the world is visible before the first tick
+  const state = appState.simulator.getState();
+  appState.renderer.render(state);
+  updateUI(state);
 
   appState.gameRunning = true;
   appState.lastTickTime = performance.now();
@@ -106,25 +119,37 @@ function mainLoop() {
     appState.simulator.tick();
     appState.lastTickTime = now;
 
-    // Render
-    const state = appState.simulator.getState();
-    appState.renderer.render(state);
-    updateUI(state);
-
-    // Check for encounter
-    if (state.encounter && !appState.encounterPending) {
-      appState.encounterPending = true;
-      displayEncounter(state.encounter);
-    }
-
-    // Check for game over
-    if (state.gameOver) {
-      endGame(state);
-      return;
-    }
+    const ended = processTickResult();
+    if (ended) return;
   }
 
   appState.animationFrameId = requestAnimationFrame(mainLoop);
+}
+
+/**
+ * Render state and handle encounters/game-over after a tick.
+ * Shared by the main loop and the Step button.
+ * Returns true if the game ended.
+ */
+function processTickResult() {
+  const state = appState.simulator.getState();
+  appState.renderer.render(state);
+  updateUI(state);
+
+  // Check for encounter
+  if (state.encounter && !appState.encounterPending) {
+    appState.encounterPending = true;
+    displayEncounter(state.encounter);
+  }
+
+  // Check for game over (deferred while an encounter popup is
+  // open so the player sees the fatal outcome first)
+  if (state.gameOver && !appState.encounterPending) {
+    endGame(state);
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -143,14 +168,19 @@ function displayEncounter(encounter) {
   // Get encounter definition
   const encounterDef = getEncounterDef(entity.type);
 
-  // Display to player
   if (encounterDef && availableOptions.length > 0) {
+    // Display to player
     appState.encounterUI.display(
       encounterDef,
       availableOptions,
       suggestedOption,
       handleEncounterChoice
     );
+  } else {
+    // No definition for this entity — auto-resolve via AI so
+    // the game never softlocks on an unknown encounter
+    appState.simulator.resolveEncounter();
+    appState.encounterPending = false;
   }
 }
 
@@ -159,37 +189,41 @@ function displayEncounter(encounter) {
  */
 function handleEncounterChoice(optionId) {
   if (optionId === 'continue') {
+    // Player dismissed the outcome popup — resume simulation
     appState.encounterPending = false;
+    appState.lastTickTime = performance.now();
     return;
   }
 
   if (!appState.simulator || !appState.simulator.currentEncounter) {
+    appState.encounterUI.hide();
     appState.encounterPending = false;
     return;
   }
 
-  // Resolve encounter with player choice (Phase 3: use player choice instead of AI)
-  // For now, AI already decided, so just show outcome
+  // Resolve through the simulator: applies stats with difficulty
+  // multiplier, removes the entity, moves the snake, checks death
+  const outcome = appState.simulator.resolveEncounterWithChoice(optionId);
+
+  // Re-render world + stats immediately
   const state = appState.simulator.getState();
-  const encounter = appState.simulator.currentEncounter;
+  appState.renderer.render(state);
+  updateUI(state);
 
-  // Resolve using the chosen option
-  const outcome = EncounterResolver.resolveOutcome(encounter.entity.type, appState.simulator.snake, optionId);
-
-  // Apply outcome
-  appState.simulator.snake.takeDamage(-outcome.health);
-  appState.simulator.snake.addScore(outcome.score);
-
-  // Display outcome
+  // Display outcome (Continue button fires 'continue' above)
   appState.encounterUI.displayOutcome(outcome);
 
-  // Clear encounter
-  appState.simulator.currentEncounter = null;
-  appState.encounterPending = false;
+  // If the encounter killed the snake, finish after the popup closes
+  if (state.gameOver) {
+    appState.encounterUI.onOptionSelected = () => {
+      appState.encounterUI.hide();
+      endGame(state);
+    };
+  }
 }
 
 /**
- * End game
+ * End game: record the run, show the game-over screen
  */
 function endGame(state) {
   console.log('Game over!');
@@ -197,16 +231,78 @@ function endGame(state) {
   document.getElementById('pause-btn').disabled = true;
   document.getElementById('step-btn').disabled = true;
 
-  // Show results
-  const resultsText = state.victory
-    ? `🏁 Victory! Score: ${state.snake.score}`
-    : `☠️ Defeat. Score: ${state.snake.score}`;
+  // Record run in progression (once)
+  let newlyUnlocked = [];
+  if (!appState.runRecorded && appState.simulator) {
+    appState.runRecorded = true;
+    const lockedBefore = Object.values(DIFFICULTIES).filter(d => !d.unlocked).map(d => d.id);
+    progression.recordRun(
+      appState.simulator.difficulty,
+      appState.draftConfig,
+      appState.simulator.getRunResult()
+    );
+    newlyUnlocked = Object.values(DIFFICULTIES)
+      .filter(d => d.unlocked && lockedBefore.includes(d.id));
+  }
 
-  const log = document.getElementById('debug-log');
-  const resultDiv = document.createElement('div');
-  resultDiv.style.cssText = 'color: #4a9eff; font-weight: bold; margin-top: 1rem;';
-  resultDiv.textContent = resultsText;
-  log.appendChild(resultDiv);
+  showGameOverScreen(state, newlyUnlocked);
+}
+
+/**
+ * Build and show the game-over modal
+ */
+function showGameOverScreen(state, newlyUnlocked) {
+  const display = document.getElementById('gameover-display');
+  const result = appState.simulator.getRunResult();
+  const difficulty = appState.simulator.difficulty;
+  const best = progression.getLeaderboard(difficulty)[difficulty] || 0;
+  const isNewBest = result.score >= best && result.score > 0;
+
+  const unlockHtml = newlyUnlocked.length > 0
+    ? `<div style="margin-top:1rem;padding:0.75rem;background:#2a1a3a;border:1px solid #b04aff;border-radius:4px;color:#d0a0ff;">
+         🔓 New difficulty unlocked: <strong>${newlyUnlocked.map(d => d.name).join(', ')}</strong>!
+       </div>`
+    : '';
+
+  display.innerHTML = `
+    <h2 style="color:${state.victory ? '#3ddc84' : '#ff6666'};font-size:1.4rem;margin-bottom:1rem;text-align:center;">
+      ${state.victory ? '🏁 Victory!' : '☠️ Your snake has fallen.'}
+    </h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1.5rem;font-size:0.95rem;margin-bottom:0.5rem;">
+      <span style="color:#888;">Score</span><strong style="color:#4a9eff;text-align:right;">${result.score}${isNewBest ? ' ⭐ New Best!' : ''}</strong>
+      <span style="color:#888;">Turns survived</span><strong style="text-align:right;">${result.turns}</strong>
+      <span style="color:#888;">Resources gathered</span><strong style="text-align:right;">${result.resourcesGathered}</strong>
+      <span style="color:#888;">Difficulty</span><strong style="text-align:right;">${difficulty}</strong>
+      <span style="color:#888;">Best on ${difficulty}</span><strong style="text-align:right;">${Math.max(best, result.score)}</strong>
+    </div>
+    ${unlockHtml}
+  `;
+
+  const againBtn = document.createElement('button');
+  againBtn.textContent = '🐍 Draft a New Snake';
+  againBtn.style.cssText = 'width:100%;margin-top:1.5rem;padding:0.9rem;font-size:1rem;';
+  againBtn.addEventListener('click', resetToDraft);
+  display.appendChild(againBtn);
+
+  display.classList.add('active');
+}
+
+/**
+ * Return to the draft screen for another run
+ */
+function resetToDraft() {
+  document.getElementById('gameover-display').classList.remove('active');
+  appState.encounterUI.hide();
+  appState.encounterUI.onOptionSelected = handleEncounterChoice;
+  appState.simulator = null;
+  appState.encounterPending = false;
+
+  // Hide game UI, show draft
+  document.getElementById('world-container').style.display = 'none';
+  document.getElementById('ui-container').style.display = 'none';
+  const draftContainer = document.getElementById('draft-container');
+  draftContainer.style.display = 'block';
+  appState.draftUI.render();
 }
 
 /**
@@ -231,12 +327,10 @@ function togglePause() {
  * Step one turn
  */
 function stepGame() {
-  if (!appState.simulator) return;
+  if (!appState.simulator || !appState.gameRunning) return;
 
   appState.simulator.tick();
-  const state = appState.simulator.getState();
-  appState.renderer.render(state);
-  updateUI(state);
+  processTickResult();
 }
 
 /**

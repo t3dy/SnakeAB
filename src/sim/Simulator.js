@@ -8,12 +8,17 @@ import { SnakeAgent } from '../agents/SnakeAgent.js';
 import { Pathfinding } from '../agents/Pathfinding.js';
 import { EncounterResolver } from '../encounters/EncounterResolver.js';
 import { TERRAIN, getTerrainProps } from '../world/Terrain.js';
+import { DIFFICULTIES } from '../game/Progression.js';
 
 export class Simulator {
   constructor(draftConfig = {}, seed = 'default', difficulty = 'medium') {
     this.draftConfig = draftConfig;
     this.seed = seed;
     this.difficulty = difficulty;
+
+    // Score multiplier from difficulty tier
+    const tier = Object.values(DIFFICULTIES).find(d => d.id === difficulty);
+    this.scoreMultiplier = tier ? tier.scoreMultiplier : 1.0;
 
     // Generate world
     this.world = ProcGen.generate(seed, difficulty);
@@ -57,7 +62,8 @@ export class Simulator {
    * Execute one turn of simulation
    */
   tick() {
-    if (this.paused || this.gameOver) return;
+    // Freeze the world while paused, finished, or waiting on an encounter
+    if (this.paused || this.gameOver || this.currentEncounter) return;
 
     this.snake.nextTurn();
     this.turn++;
@@ -90,9 +96,12 @@ export class Simulator {
       const nextPos = this.currentPath[this.pathIndex];
       this.pathIndex++;
 
-      // Check for collision with entities
+      // Track facing direction for rendering
+      this.snake.facing = this.computeFacing(nextPos);
+
+      // Check for collision with encounter entities (goal is NOT an encounter)
       const entities = this.world.getEntitiesAt(nextPos.x, nextPos.y);
-      const collidedEntity = entities.find(e => e.type !== 'snake');
+      const collidedEntity = entities.find(e => e.type !== 'snake' && e.type !== 'goal');
 
       if (collidedEntity) {
         // Trigger encounter
@@ -115,7 +124,7 @@ export class Simulator {
       if (currentEntities.some(e => e.type === 'goal')) {
         this.gameOver = true;
         this.victory = true;
-        this.snake.addScore(100);
+        this.snake.addScore(Math.round(100 * this.scoreMultiplier));
         this.addLog('🏁 Goal reached! Victory!');
         return;
       }
@@ -126,61 +135,98 @@ export class Simulator {
   }
 
   /**
+   * Compute facing direction toward a target position
+   */
+  computeFacing(nextPos) {
+    if (nextPos.x > this.snake.x) return 'right';
+    if (nextPos.x < this.snake.x) return 'left';
+    if (nextPos.y > this.snake.y) return 'down';
+    if (nextPos.y < this.snake.y) return 'up';
+    return this.snake.facing || 'right';
+  }
+
+  /**
    * Resolve current encounter using AI decision logic
    */
   resolveEncounter() {
     if (!this.currentEncounter) return;
 
-    const encounter = this.currentEncounter;
-    const entity = encounter.entity;
-    const entityType = entity.type;
+    const entityType = this.currentEncounter.entity.type;
 
-    // Use EncounterResolver to get AI decision and outcome
-    const resolution = EncounterResolver.resolveEncounter(entityType, this.snake);
-
-    if (resolution.error) {
-      this.addLog(`❓ Encounter error: ${resolution.error}`);
+    // Use EncounterResolver to get AI decision
+    const chosenOption = EncounterResolver.decideAction(entityType, this.snake);
+    if (!chosenOption) {
+      this.addLog(`❓ No viable options for ${entityType}`);
       this.currentEncounter = null;
       return;
     }
 
-    const { chosenOption, outcome, statDelta } = resolution;
+    return this.resolveEncounterWithChoice(chosenOption);
+  }
 
-    // Apply outcome
-    if (statDelta.health !== 0) {
-      if (statDelta.health > 0) {
-        this.snake.gainHealth(statDelta.health);
-      } else {
-        this.snake.takeDamage(-statDelta.health);
-      }
+  /**
+   * Resolve current encounter with a specific option
+   * (player choice or AI suggestion). Applies stats,
+   * removes the encounter entity, moves the snake forward,
+   * and checks for death. Returns the outcome.
+   */
+  resolveEncounterWithChoice(optionId) {
+    if (!this.currentEncounter) return null;
+
+    const encounter = this.currentEncounter;
+    const entity = encounter.entity;
+
+    // Resolve the outcome (stat checks happen here)
+    const outcome = EncounterResolver.resolveOutcome(entity.type, this.snake, optionId);
+    this.snake.recordEncounter(`${entity.type}-encounter`, outcome.success);
+
+    // Apply stat changes (score scaled by difficulty)
+    if (outcome.health > 0) {
+      this.snake.gainHealth(outcome.health);
+    } else if (outcome.health < 0) {
+      this.snake.takeDamage(-outcome.health);
+    }
+    if (outcome.score !== 0) {
+      this.snake.addScore(Math.round(outcome.score * this.scoreMultiplier));
     }
 
-    if (statDelta.score !== 0) {
-      this.snake.addScore(statDelta.score);
-    }
+    this.addLog(`${outcome.text} [${optionId}]`);
 
-    // Log the outcome
-    this.addLog(`${outcome.text} [${chosenOption}]`);
-
-    // Remove consumed/defeated entities
-    if (entity.type === 'predator' && outcome.text.includes('Victory')) {
-      this.world.removeEntity(encounter.position.x, encounter.position.y, entity.id);
-    }
-    if (entity.type === 'food' || entity.type === 'medicine' || entity.type === 'treasure') {
+    // Track gathered resources
+    if (['food', 'medicine', 'treasure'].includes(entity.type)) {
       this.snake.resourcesGathered++;
-      this.world.removeEntity(encounter.position.x, encounter.position.y, entity.id);
-    }
-    if (entity.type === 'trap' && outcome.text.includes('Successfully')) {
-      this.world.removeEntity(encounter.position.x, encounter.position.y, entity.id);
     }
 
-    // Check if snake died
-    if (!this.snake.isAlive()) {
+    // The encounter is spent: remove the entity so the snake
+    // can't loop on the same tile (fled predators wander off,
+    // sprung traps are done, eaten food is gone)
+    this.world.removeEntity(encounter.position.x, encounter.position.y, entity.id);
+
+    // Move the snake onto the now-clear tile if it survived
+    if (this.snake.isAlive()) {
+      this.world.moveEntity(this.snake.x, this.snake.y, encounter.position.x, encounter.position.y, this.snake.id);
+      this.snake.x = encounter.position.x;
+      this.snake.y = encounter.position.y;
+    } else {
       this.gameOver = true;
       this.addLog('☠️ You died.');
     }
 
     this.currentEncounter = null;
+    return outcome;
+  }
+
+  /**
+   * Get run result for progression recording
+   */
+  getRunResult() {
+    return {
+      score: this.snake.score,
+      turns: this.turn,
+      victory: this.victory,
+      healthRemaining: this.snake.health,
+      resourcesGathered: this.snake.resourcesGathered,
+    };
   }
 
   /**
@@ -192,6 +238,7 @@ export class Simulator {
       snake: {
         x: this.snake.x,
         y: this.snake.y,
+        facing: this.snake.facing || 'right',
         health: this.snake.health,
         maxHealth: this.snake.maxHealth,
         score: this.snake.score,

@@ -5,6 +5,7 @@
  */
 
 import { getSynergyText } from '../agents/EquipmentSynergies.js';
+import { DIFFICULTIES, progression } from '../game/Progression.js';
 
 export class DraftUI {
   constructor(onSubmit) {
@@ -14,6 +15,7 @@ export class DraftUI {
       equipment: [],
       personality: [],
       difficulty: 'medium',
+      seed: '',
     };
   }
 
@@ -34,6 +36,32 @@ export class DraftUI {
     `;
     title.textContent = '🐍 Draft Your Snake';
     container.appendChild(title);
+
+    // Career stats strip (only after first run)
+    const stats = progression.getStats();
+    if (stats.totalRuns > 0) {
+      const strip = document.createElement('div');
+      strip.style.cssText = `
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+        padding: 0.75rem;
+        background: #10202e;
+        border: 1px solid #333;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        color: #888;
+        flex-wrap: wrap;
+      `;
+      const victories = Object.values(stats.victories).reduce((a, b) => a + b, 0);
+      strip.innerHTML = `
+        <span>Runs: <strong style="color:#4a9eff">${stats.totalRuns}</strong></span>
+        <span>Victories: <strong style="color:#3ddc84">${victories}</strong></span>
+        <span>Avg Score: <strong style="color:#4a9eff">${stats.avgScore}</strong></span>
+      `;
+      container.appendChild(strip);
+    }
 
     // Attribute Selection
     this.renderAttributeSelector(container);
@@ -208,7 +236,8 @@ export class DraftUI {
   }
 
   /**
-   * Render difficulty selector
+   * Render difficulty selector (progression-aware: locked tiers
+   * show their unlock requirement; best scores shown per tier)
    */
   renderDifficultySelector(container) {
     const section = document.createElement('div');
@@ -219,18 +248,35 @@ export class DraftUI {
     title.textContent = 'Difficulty';
     section.appendChild(title);
 
-    const difficultyOptions = [
-      { id: 'easy', name: 'Easy', desc: 'Sparse terrain, gentle challenge' },
-      { id: 'medium', name: 'Medium', desc: 'Moderate obstacles and predators' },
-      { id: 'hard', name: 'Hard', desc: 'Dense terrain, many threats' },
-    ];
+    // Refresh unlock state before rendering
+    progression.checkUnlocks();
+    const bestScores = progression.getLeaderboard();
 
     const cards = document.createElement('div');
-    cards.style.cssText = 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;';
+    cards.style.cssText = 'display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;';
 
-    for (const diff of difficultyOptions) {
+    for (const diff of Object.values(DIFFICULTIES)) {
       const isSelected = this.selection.difficulty === diff.id;
-      const card = this.createCard(diff.name, diff.desc, () => {
+      const best = bestScores[diff.id] || 0;
+
+      let desc = `${diff.description} (×${diff.scoreMultiplier} score)`;
+      if (best > 0) desc += ` — Best: ${best}`;
+
+      if (!diff.unlocked) {
+        const req = diff.unlockRequirement;
+        const card = this.createCard(
+          `🔒 ${diff.name}`,
+          `Unlock: score ${req.minScore}+ on ${req.difficulty}`,
+          () => {}, // Locked — no selection
+          false
+        );
+        card.style.opacity = '0.45';
+        card.style.cursor = 'not-allowed';
+        cards.appendChild(card);
+        continue;
+      }
+
+      const card = this.createCard(`${diff.icon} ${diff.name}`, desc, () => {
         this.selection.difficulty = diff.id;
         this.render();
       }, isSelected);
@@ -239,6 +285,39 @@ export class DraftUI {
     }
 
     section.appendChild(cards);
+    container.appendChild(section);
+
+    // Seed input
+    this.renderSeedInput(container);
+  }
+
+  /**
+   * Render optional world seed input
+   */
+  renderSeedInput(container) {
+    const section = document.createElement('div');
+    section.className = 'panel';
+    section.style.cssText = 'margin-bottom: 1.5rem;';
+
+    const title = document.createElement('h2');
+    title.textContent = 'World Seed (optional)';
+    section.appendChild(title);
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display: flex; gap: 0.5rem; align-items: center;';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'seed-input';
+    input.placeholder = 'Leave blank for random world';
+    input.value = this.selection.seed || '';
+    input.style.cssText = 'flex: 1;';
+    input.addEventListener('input', () => {
+      this.selection.seed = input.value;
+    });
+    row.appendChild(input);
+
+    section.appendChild(row);
     container.appendChild(section);
   }
 

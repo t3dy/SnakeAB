@@ -31,26 +31,70 @@ export class Renderer {
       this.drawTile(tile);
     }
 
-    // Draw snake
-    const snakeX = this.offsetX + snake.x * this.cellSize;
-    const snakeY = this.offsetY + snake.y * this.cellSize;
-
-    this.ctx.fillStyle = '#4a9eff';
-    this.ctx.fillRect(snakeX, snakeY, this.cellSize, this.cellSize);
-    this.ctx.strokeStyle = '#fff';
-    this.ctx.lineWidth = 2;
-    this.ctx.strokeRect(snakeX, snakeY, this.cellSize, this.cellSize);
+    // Draw grid under entities
+    this.drawGrid(world.width, world.height);
 
     // Draw entities
     for (const tile of world.tiles) {
       for (const entity of tile.entities) {
-        if (entity.type === 'snake') continue; // Already drawn
+        if (entity.type === 'snake') continue; // Drawn last, on top
         this.drawEntity(tile, entity);
       }
     }
 
-    // Draw grid
-    this.drawGrid(world.width, world.height);
+    // Draw snake on top of everything
+    this.drawSnake(snake);
+  }
+
+  /**
+   * Draw the snake with a rounded body and directional eyes
+   */
+  drawSnake(snake) {
+    const x = this.offsetX + snake.x * this.cellSize;
+    const y = this.offsetY + snake.y * this.cellSize;
+    const s = this.cellSize;
+
+    // Body
+    this.ctx.fillStyle = '#3ddc84';
+    this.ctx.strokeStyle = '#1a7a44';
+    this.ctx.lineWidth = 1.5;
+    this.ctx.beginPath();
+    if (this.ctx.roundRect) {
+      this.ctx.roundRect(x + 1.5, y + 1.5, s - 3, s - 3, s / 4);
+    } else {
+      this.ctx.rect(x + 1.5, y + 1.5, s - 3, s - 3);
+    }
+    this.ctx.fill();
+    this.ctx.stroke();
+
+    // Eyes positioned by facing direction
+    const eyeOffsets = {
+      right: [{ x: 0.65, y: 0.3 }, { x: 0.65, y: 0.7 }],
+      left: [{ x: 0.35, y: 0.3 }, { x: 0.35, y: 0.7 }],
+      up: [{ x: 0.3, y: 0.35 }, { x: 0.7, y: 0.35 }],
+      down: [{ x: 0.3, y: 0.65 }, { x: 0.7, y: 0.65 }],
+    };
+    const eyes = eyeOffsets[snake.facing] || eyeOffsets.right;
+    const eyeR = Math.max(1.5, s * 0.09);
+
+    for (const eye of eyes) {
+      this.ctx.fillStyle = '#0a0a0a';
+      this.ctx.beginPath();
+      this.ctx.arc(x + s * eye.x, y + s * eye.y, eyeR, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+
+    // Low-health flash: red tint overlay
+    if (snake.maxHealth && snake.health / snake.maxHealth <= 0.3) {
+      this.ctx.fillStyle = 'rgba(255, 40, 40, 0.35)';
+      this.ctx.beginPath();
+      if (this.ctx.roundRect) {
+        this.ctx.roundRect(x + 1.5, y + 1.5, s - 3, s - 3, s / 4);
+      } else {
+        this.ctx.rect(x + 1.5, y + 1.5, s - 3, s - 3);
+      }
+      this.ctx.fill();
+    }
   }
 
   /**
@@ -114,8 +158,26 @@ export class Renderer {
     const color = colors[entity.type] || '#fff';
     const icon = icons[entity.type] || '?';
 
+    // Goal gets a pulsing glow ring
+    if (entity.type === 'goal') {
+      const pulse = 0.75 + 0.25 * Math.sin(Date.now() / 300);
+      this.ctx.strokeStyle = `rgba(0, 255, 100, ${pulse})`;
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.arc(
+        canvasX + this.cellSize / 2,
+        canvasY + this.cellSize / 2,
+        this.cellSize / 2.2,
+        0,
+        Math.PI * 2
+      );
+      this.ctx.stroke();
+    }
+
     // Draw entity marker
     this.ctx.fillStyle = color;
+    this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+    this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     this.ctx.arc(
       canvasX + this.cellSize / 2,
@@ -125,6 +187,7 @@ export class Renderer {
       Math.PI * 2
     );
     this.ctx.fill();
+    this.ctx.stroke();
 
     // Draw icon
     if (this.cellSize >= 12) {
