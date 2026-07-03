@@ -99,12 +99,48 @@ export class ProcGen {
       }
     }
 
+    // Place medicine (rarer than food)
+    const numMedicine = Math.max(1, Math.floor((width * height) / 150));
+    for (let i = 0; i < numMedicine; i++) {
+      const tile = world.getRandomEmptyTile(TERRAIN.GRASS);
+      if (tile) {
+        world.addEntity({ id: `medicine-${i}`, type: 'medicine', value: 15 }, tile.x, tile.y);
+      }
+    }
+
+    // Place treasure (very rare)
+    const numTreasure = Math.max(1, Math.floor((width * height) / 200));
+    for (let i = 0; i < numTreasure; i++) {
+      const tile = world.getRandomEmptyTile(TERRAIN.GRASS);
+      if (tile) {
+        world.addEntity({ id: `treasure-${i}`, type: 'treasure', value: 50 }, tile.x, tile.y);
+      }
+    }
+
     // Place predators
     const numPredators = Math.max(1, Math.floor((width * height) / 100));
     for (let i = 0; i < numPredators; i++) {
       const tile = world.getRandomEmptyTile(TERRAIN.GRASS);
       if (tile) {
         world.addEntity({ id: `predator-${i}`, type: 'predator', threat: 5 }, tile.x, tile.y);
+      }
+    }
+
+    // Place traps (hazards that are interactive)
+    const numTraps = Math.max(1, Math.floor((width * height) / 120));
+    for (let i = 0; i < numTraps; i++) {
+      const tile = world.getRandomEmptyTile(TERRAIN.GRASS);
+      if (tile) {
+        world.addEntity({ id: `trap-${i}`, type: 'trap', danger: 3 }, tile.x, tile.y);
+      }
+    }
+
+    // Place NPCs (friendly or neutral entities)
+    const numNPCs = Math.max(1, Math.floor((width * height) / 130));
+    for (let i = 0; i < numNPCs; i++) {
+      const tile = world.getRandomEmptyTile(TERRAIN.GRASS);
+      if (tile) {
+        world.addEntity({ id: `npc-${i}`, type: 'npc', disposition: 'neutral' }, tile.x, tile.y);
       }
     }
 

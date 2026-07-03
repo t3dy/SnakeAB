@@ -162,12 +162,15 @@ export class Simulator {
     // Log the outcome
     this.addLog(`${outcome.text} [${chosenOption}]`);
 
-    // Remove defeated entities
-    if (entity.type === 'predator' && outcome.success) {
+    // Remove consumed/defeated entities
+    if (entity.type === 'predator' && outcome.text.includes('Victory')) {
       this.world.removeEntity(encounter.position.x, encounter.position.y, entity.id);
     }
-    if (entity.type === 'food') {
+    if (entity.type === 'food' || entity.type === 'medicine' || entity.type === 'treasure') {
       this.snake.resourcesGathered++;
+      this.world.removeEntity(encounter.position.x, encounter.position.y, entity.id);
+    }
+    if (entity.type === 'trap' && outcome.text.includes('Successfully')) {
       this.world.removeEntity(encounter.position.x, encounter.position.y, entity.id);
     }
 

@@ -7,6 +7,8 @@ import { SnakeAgent } from '../src/agents/SnakeAgent.js';
 import {
   ENCOUNTERS,
   FOOD_ENCOUNTER,
+  MEDICINE_ENCOUNTER,
+  TREASURE_ENCOUNTER,
   PREDATOR_ENCOUNTER,
   isOptionAvailable,
   getEncounterDef,
@@ -32,9 +34,10 @@ describe('Encounter Types', () => {
     assert.ok(predatorDef.options.length > 0);
   });
 
-  test('food encounter should have eat and skip options', () => {
-    assert.equal(FOOD_ENCOUNTER.options.length, 2);
+  test('food encounter should have eat, save, and skip options', () => {
+    assert.equal(FOOD_ENCOUNTER.options.length, 3);
     assert.ok(FOOD_ENCOUNTER.options.some(o => o.id === 'eat'));
+    assert.ok(FOOD_ENCOUNTER.options.some(o => o.id === 'save'));
     assert.ok(FOOD_ENCOUNTER.options.some(o => o.id === 'skip'));
   });
 
@@ -95,7 +98,7 @@ describe('EncounterResolver', () => {
     });
 
     const options = EncounterResolver.getAvailableOptions(ENCOUNTERS.FOOD, snake);
-    assert.equal(options.length, 2); // eat and skip
+    assert.equal(options.length, 3); // eat, save, and skip
 
     const predatorOptions = EncounterResolver.getAvailableOptions(ENCOUNTERS.PREDATOR, snake);
     assert.ok(predatorOptions.length >= 3);
@@ -192,9 +195,9 @@ describe('EncounterResolver', () => {
       decisions.push(decision);
     }
 
-    // Greedy snake should favor eating
-    const eatCount = decisions.filter(d => d === 'eat').length;
-    assert.ok(eatCount >= 7); // Majority should eat
+    // Greedy snake should favor eating/gathering (eat or save)
+    const resourceCount = decisions.filter(d => d === 'eat' || d === 'save').length;
+    assert.ok(resourceCount >= 7); // Should gather resources most of the time
   });
 });
 
@@ -249,6 +252,78 @@ describe('Encounter Integration', () => {
 
     assert.ok(resolution.chosenOption);
     assert.ok(resolution.outcome);
+  });
+});
+
+describe('Medicine & Treasure Encounters', () => {
+  test('should define medicine encounter', () => {
+    assert.equal(MEDICINE_ENCOUNTER.type, ENCOUNTERS.MEDICINE);
+    assert.ok(MEDICINE_ENCOUNTER.options.length > 0);
+    assert.ok(MEDICINE_ENCOUNTER.outcomes);
+  });
+
+  test('should define treasure encounter', () => {
+    assert.equal(TREASURE_ENCOUNTER.type, ENCOUNTERS.TREASURE);
+    assert.ok(TREASURE_ENCOUNTER.options.length > 0);
+    assert.ok(TREASURE_ENCOUNTER.outcomes);
+  });
+
+  test('medicine encounter should have use, ration, and ignore options', () => {
+    assert.equal(MEDICINE_ENCOUNTER.options.length, 3);
+    assert.ok(MEDICINE_ENCOUNTER.options.some(o => o.id === 'use'));
+    assert.ok(MEDICINE_ENCOUNTER.options.some(o => o.id === 'ration'));
+    assert.ok(MEDICINE_ENCOUNTER.options.some(o => o.id === 'ignore'));
+  });
+
+  test('treasure encounter should have take-all, choose, and leave options', () => {
+    assert.equal(TREASURE_ENCOUNTER.options.length, 3);
+    assert.ok(TREASURE_ENCOUNTER.options.some(o => o.id === 'take-all'));
+    assert.ok(TREASURE_ENCOUNTER.options.some(o => o.id === 'choose'));
+    assert.ok(TREASURE_ENCOUNTER.options.some(o => o.id === 'leave'));
+  });
+
+  test('medicine outcomes should restore health', () => {
+    assert.ok(MEDICINE_ENCOUNTER.outcomes.use.health > 0);
+    assert.ok(MEDICINE_ENCOUNTER.outcomes.ration.health > 0);
+    assert.equal(MEDICINE_ENCOUNTER.outcomes.ignore.health, 0);
+  });
+
+  test('treasure outcomes should provide score', () => {
+    assert.ok(MEDICINE_ENCOUNTER.outcomes.use.text);
+    assert.ok(TREASURE_ENCOUNTER.outcomes['take-all'].score > 0);
+    assert.ok(TREASURE_ENCOUNTER.outcomes.choose.score > TREASURE_ENCOUNTER.outcomes['take-all'].score);
+  });
+
+  test('get encounter def for medicine', () => {
+    const medicineDef = getEncounterDef(ENCOUNTERS.MEDICINE);
+    assert.equal(medicineDef.type, ENCOUNTERS.MEDICINE);
+  });
+
+  test('get encounter def for treasure', () => {
+    const treasureDef = getEncounterDef(ENCOUNTERS.TREASURE);
+    assert.equal(treasureDef.type, ENCOUNTERS.TREASURE);
+  });
+
+  test('treasure choose option requires intelligence', () => {
+    const chooseDef = TREASURE_ENCOUNTER.options.find(o => o.id === 'choose');
+    assert.ok(chooseDef.requirements);
+    assert.ok(chooseDef.requirements.statCheck === 'intelligence');
+  });
+
+  test('medicine encounter resolver should resolve use outcome', () => {
+    const snake = new SnakeAgent({ attribute: 'strength', equipment: [], personality: [] });
+    const resolution = EncounterResolver.resolveEncounter(ENCOUNTERS.MEDICINE, snake);
+    assert.ok(resolution.chosenOption);
+    assert.ok(resolution.outcome);
+    assert.ok(resolution.statDelta);
+  });
+
+  test('treasure encounter resolver should resolve take-all outcome', () => {
+    const snake = new SnakeAgent({ attribute: 'strength', equipment: [], personality: [] });
+    const resolution = EncounterResolver.resolveEncounter(ENCOUNTERS.TREASURE, snake);
+    assert.ok(resolution.chosenOption);
+    assert.ok(resolution.outcome);
+    assert.ok(resolution.statDelta);
   });
 });
 

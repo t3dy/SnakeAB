@@ -57,8 +57,16 @@ export class EncounterResolver {
         }
       }
 
-      if (entityType === ENCOUNTERS.FOOD) {
+      if (entityType === ENCOUNTERS.FOOD || entityType === ENCOUNTERS.MEDICINE || entityType === ENCOUNTERS.TREASURE) {
         if (opt.id === 'eat' && snake.hasPersonality('greedy')) {
+          weight += 5;
+        } else if (opt.id === 'save' && snake.hasPersonality('greedy')) {
+          weight += 3;
+        } else if (opt.id === 'take-all' && snake.hasPersonality('greedy')) {
+          weight += 5;
+        } else if (opt.id === 'choose' && snake.hasPersonality('greedy')) {
+          weight += 3;
+        } else if (opt.id === 'use' && snake.hasPersonality('greedy')) {
           weight += 2;
         }
       }

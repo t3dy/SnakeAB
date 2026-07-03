@@ -91,18 +91,24 @@ export class Renderer {
 
     const colors = {
       food: '#ffff00',
+      medicine: '#00ff00',
+      treasure: '#ffff00',
       predator: '#ff6600',
       goal: '#00ff00',
       npc: '#ff00ff',
       trap: '#ff0000',
+      hazard: '#ff0088',
     };
 
     const icons = {
       food: '🍎',
+      medicine: '💊',
+      treasure: '💰',
       predator: '🐺',
       goal: '🏁',
       npc: '🧙',
       trap: '⚠️',
+      hazard: '🔥',
     };
 
     const color = colors[entity.type] || '#fff';

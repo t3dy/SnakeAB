@@ -9,6 +9,8 @@
  */
 export const ENCOUNTERS = {
   FOOD: 'food',
+  MEDICINE: 'medicine',
+  TREASURE: 'treasure',
   PREDATOR: 'predator',
   TRAP: 'trap',
   NPC: 'npc',
@@ -33,9 +35,15 @@ export const FOOD_ENCOUNTER = {
       requirements: {}, // Always available
     },
     {
+      id: 'save',
+      name: 'Save for Later',
+      description: 'Store it safely',
+      requirements: {},
+    },
+    {
       id: 'skip',
       name: 'Skip',
-      description: 'Leave it for later',
+      description: 'Leave it for others',
       requirements: {}, // Always available
     },
   ],
@@ -43,12 +51,114 @@ export const FOOD_ENCOUNTER = {
     eat: {
       health: 5,
       score: 10,
-      text: '🍎 Gained health!',
+      text: '🍎 Nom nom! Health restored.',
+    },
+    save: {
+      health: 2,
+      score: 15,
+      text: '📦 Stored the food safely. Will need it later.',
     },
     skip: {
       health: 0,
       score: 0,
-      text: '⏭️ Continued on.',
+      text: '⏭️ Continued on your journey.',
+    },
+  },
+};
+
+/**
+ * Medicine encounter
+ * Snake finds healing supplies
+ */
+export const MEDICINE_ENCOUNTER = {
+  type: ENCOUNTERS.MEDICINE,
+  name: 'Medical Supplies',
+  description: 'You found medical supplies!',
+  options: [
+    {
+      id: 'use',
+      name: 'Use Immediately',
+      description: 'Apply medicine to heal',
+      requirements: {},
+    },
+    {
+      id: 'ration',
+      name: 'Ration It',
+      description: 'Use it sparingly',
+      requirements: {},
+    },
+    {
+      id: 'ignore',
+      name: 'Leave It',
+      description: 'You don\'t need it',
+      requirements: {},
+    },
+  ],
+  outcomes: {
+    use: {
+      health: 15,
+      score: 5,
+      text: '💊 Full recovery! Feel much better.',
+    },
+    ration: {
+      health: 8,
+      score: 20,
+      text: '💊 Careful dosage. Saved some for later.',
+    },
+    ignore: {
+      health: 0,
+      score: 0,
+      text: '⏭️ Left the medicine untouched.',
+    },
+  },
+};
+
+/**
+ * Treasure encounter
+ * Snake finds valuable items
+ */
+export const TREASURE_ENCOUNTER = {
+  type: ENCOUNTERS.TREASURE,
+  name: 'Treasure!',
+  description: 'You found treasure! What do you take?',
+  options: [
+    {
+      id: 'take-all',
+      name: 'Take Everything',
+      description: 'Grab as much as possible',
+      requirements: {},
+    },
+    {
+      id: 'choose',
+      name: 'Choose Carefully',
+      description: 'Take only the best items',
+      requirements: {
+        statCheck: 'intelligence',
+        minValue: 4,
+      },
+    },
+    {
+      id: 'leave',
+      name: 'Leave It',
+      description: 'Too risky',
+      requirements: {},
+    },
+  ],
+  outcomes: {
+    'take-all': {
+      health: 0,
+      score: 50,
+      text: '💰 Jackpot! Loaded with treasure!',
+    },
+    choose: {
+      health: 0,
+      score: 75,
+      text: '💎 Selected the finest treasures. Excellent haul!',
+    },
+    leave: {
+      health: 0,
+      score: 0,
+      text: '⏭️ Moved on without the treasure.',
     },
   },
 };
@@ -346,6 +456,8 @@ export const HAZARD_ENCOUNTER = {
 export function getEncounterDef(entityType) {
   const defs = {
     [ENCOUNTERS.FOOD]: FOOD_ENCOUNTER,
+    [ENCOUNTERS.MEDICINE]: MEDICINE_ENCOUNTER,
+    [ENCOUNTERS.TREASURE]: TREASURE_ENCOUNTER,
     [ENCOUNTERS.PREDATOR]: PREDATOR_ENCOUNTER,
     [ENCOUNTERS.TRAP]: TRAP_ENCOUNTER,
     [ENCOUNTERS.NPC]: NPC_ENCOUNTER,
